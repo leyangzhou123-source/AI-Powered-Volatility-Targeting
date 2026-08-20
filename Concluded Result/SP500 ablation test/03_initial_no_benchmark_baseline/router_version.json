@@ -1,0 +1,37 @@
+{
+  "ablation": "no_benchmark_baseline",
+  "api_key_env": "NVAPI_KEY2",
+  "fallback_methods_in_current_router": {
+    "deterministic_selection": "composite score: Sharpe - 3.5*drawdown - 2.0*CVaR - 1.25*drawdown consistency penalty",
+    "deterministic_switch": "composite-score easy switch fallback: regime change, best non-active near active score, or active drawdown trigger"
+  },
+  "hard_exclusions": {
+    "controllers": [
+      "constant",
+      "constant_weight",
+      "cva_restargeting",
+      "cvar",
+      "cvar_es",
+      "cvares"
+    ],
+    "estimators": [
+      "ar1",
+      "ar2",
+      "ewma",
+      "hybrid_ewma",
+      "hybrid_ewmaregime",
+      "lasso",
+      "lasso_volatility",
+      "buy_and_hold",
+      "buyandhold"
+    ]
+  },
+  "kind": "initial_run",
+  "model": "openai/gpt-oss-20b",
+  "oos_end": "2026-02-10",
+  "oos_start": "2023-02-10",
+  "pool_size": 117,
+  "removed_component": "RV22 naive-scaling benchmark comparison + deterministic train-window baseline champion",
+  "snapshot_contract": "results/evaluation/router_component_ablation_snapshot_20260704.md",
+  "source_output_dir": "results/evaluation/ai_regime_router_oss20b_filtered_strictjson2_no_benchmark_baseline_20230210_20260210"
+}

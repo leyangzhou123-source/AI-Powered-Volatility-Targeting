@@ -1,0 +1,138 @@
+name: garch_11
+data:
+  symbol: ES.v.0
+  source: local_csv
+target_vol: 0.1
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: garch_11__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: garch_11__naive_scaling
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: garch_11__constant_weight
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: garch_11__variance_scaling
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: garch_11__regime_switch
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: garch_11__vol_target_clip
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: garch_11__drawdown_brake
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: garch_11__trend_filter
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: garch_11__cvar_es_targeting
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: garch_11__hysteresis
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: garch_11__priority_stack
+    estimator:
+      class: src.estimators.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+        mean: Zero
+        dist: normal
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

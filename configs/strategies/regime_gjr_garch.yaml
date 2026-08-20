@@ -1,0 +1,64 @@
+name: regime_gjr_garch
+description: >
+  Regime-Switching GJR-GARCH(1,1,1) volatility estimator.
+
+  Architecture:
+    (1) 3-state GaussianHMM on log(RV5) detects Low / Mid / High regimes.
+    (2) A realized-regime override fires when the HMM prediction persistently
+        disagrees with the RV-quantile-based regime over a window of 5 days.
+        This corrects HMM lag during structural breaks.
+    (3) Three independent GJR-GARCH(1,1,1) models, one per regime.
+        Each owns its own [omega, alpha, gamma, beta] and its own filter state
+        (sigma2, eps2, neg_indicator).  State is FROZEN when a regime is
+        inactive and RESUMED (not reinitialised) on return.
+    (4) In the High regime, a Generalised Pareto Distribution is fitted on
+        the tail of squared residuals.  Expected tail excess scales the base
+        vol forecast upward, preventing underestimation in crisis periods.
+
+  Suitable roll_window: 252 (gives the HMM enough history to identify 3 regimes
+  and the GJR-GARCH at least 63+ regime-specific observations per state).
+
+data:
+  path: data/processed/Master_Dataset.parquet
+
+roll_window: 252
+
+estimator:
+  class: src.estimators.regime_gjr_garch.RegimeGJRGARCH
+  params:
+    # GJR-GARCH model spec
+    p: 1
+    q: 1
+    o: 1
+    dist: normal
+    maxiter: 500
+    scale: 1000.0
+    vol_ann: 252
+
+    # Window configuration
+    lookback: 252          # max history used for per-regime GJR calibration
+    min_obs: 126           # obs required before primary estimation (EWMA below)
+    recal_freq: 63         # recalibrate each regime's GJR every ~quarter
+    hmm_recal_freq: 21     # refit HMM every ~month
+
+    # Realized-regime override
+    override_window: 5     # W: consecutive-mismatch window to trigger override
+    rv_low_q: 0.33         # RV5 quantile separating Low from Mid
+    rv_high_q: 0.67        # RV5 quantile separating Mid from High
+
+    # EVT tail adjustment (High regime only)
+    use_evt: true
+    evt_tail_thresh: 0.90  # GPD threshold = 90th percentile of squared residuals
+    evt_scale_max: 1.50    # cap EVT upward multiplier to prevent inflation
+
+    # EWMA fallback half-life (warm-up + hard fallback)
+    ewma_hl: 21
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

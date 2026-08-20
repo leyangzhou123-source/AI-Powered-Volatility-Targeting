@@ -1,0 +1,24 @@
+name: ewma_vol_naive_scaling
+description: Exponentially weighted moving average volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ewma.EWMA
+  params:
+    halflife: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252

@@ -1,0 +1,15 @@
+date,active_pair,portfolio_regime
+2024-02-09,pca_covariance__diversified_risk_parity,risk_on
+2024-02-26,pca_covariance__hysteresis_portfolio,risk_on
+2024-06-05,pca_covariance__inverse_vol,risk_on
+2024-09-30,pca_covariance__regime_aware_risk_budget,risk_on
+2024-11-25,pca_covariance__hysteresis_portfolio,risk_on
+2025-03-11,pca_covariance__equal_risk_contribution,balanced
+2025-05-21,pca_covariance__regime_aware_risk_budget,balanced
+2025-07-07,pca_covariance__equal_risk_contribution,defensive
+2025-07-21,expanding_covariance__hysteresis_portfolio,balanced
+2025-09-02,diagonal_ewma_covariance__diversified_risk_parity,risk_on
+2025-10-14,pca_covariance__diversified_risk_parity,risk_on
+2025-10-28,diagonal_ewma_covariance__hysteresis_portfolio,balanced
+2026-01-09,expanding_covariance__hysteresis_portfolio,risk_on
+2026-02-09,ledoit_wolf_covariance__hysteresis_portfolio,risk_on

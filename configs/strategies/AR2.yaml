@@ -1,0 +1,100 @@
+name: ar2
+description: AR(2) model on squared returns for vol targeting
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+target_vol: 0.1
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: ar2__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: ar2__naive_scaling
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: ar2__constant_weight
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: ar2__variance_scaling
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: ar2__regime_switch
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: ar2__vol_target_clip
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: ar2__drawdown_brake
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: ar2__trend_filter
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: ar2__cvar_es_targeting
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: ar2__hysteresis
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: ar2__priority_stack
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

@@ -1,0 +1,7 @@
+date,active_pair,portfolio_regime
+2024-02-09,expanding_covariance__equal_risk_contribution,risk_on
+2024-02-26,downside_covariance__diversified_risk_parity,risk_on
+2024-06-20,downside_covariance__inverse_vol,risk_on
+2024-08-16,dynamic_blend_covariance__regime_aware_risk_budget,defensive
+2025-03-25,expanding_covariance__equal_risk_contribution,defensive
+2026-02-09,expanding_covariance__regime_aware_risk_budget,risk_on

@@ -1,0 +1,111 @@
+name: ewma
+description: Exponentially weighted moving average volatility strategy
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+router:
+  enabled: true
+  default_pair: ewma__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: ewma__naive_scaling
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: ewma__constant_weight
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: ewma__variance_scaling
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: ewma__regime_switch
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: ewma__vol_target_clip
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: ewma__drawdown_brake
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: ewma__trend_filter
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: ewma__cvar_es_targeting
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: ewma__hysteresis
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: ewma__priority_stack
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+target_vol: 0.1
+rebalance_freq: daily
+roll_window: 252
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252

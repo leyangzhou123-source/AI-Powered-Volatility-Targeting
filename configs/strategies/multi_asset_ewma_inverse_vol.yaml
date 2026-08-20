@@ -1,0 +1,35 @@
+name: multi_asset_ewma_inverse_vol
+description: Multi-asset volatility targeting template using covariance estimation and portfolio weights.
+engine_mode: multi_asset
+
+data:
+  path: data/processed/emm_daily_log_returns_yahoo_20220210_20260210.parquet
+
+target_vol: 0.10
+rebalance_freq: daily
+roll_window: 126
+cost_bps: 5.0
+initial_capital: 1000.0
+auto_tune: true
+
+tuning:
+  enabled: true
+  days: 252
+  estimator_grid:
+    halflife: [10, 21, 42]
+  controller_grid:
+    max_weight: [0.35, 0.45, 0.60]
+    max_gross: [1.0, 1.25, 1.5]
+
+estimator:
+  class: src.multi_asset.covariance_estimators.EWMACovariance
+  params:
+    halflife: 21
+    vol_ann: 252
+
+controller:
+  class: src.multi_asset.controllers.InverseVolController
+  params:
+    max_weight: 0.45
+    max_gross: 1.5
+    vol_scale: true

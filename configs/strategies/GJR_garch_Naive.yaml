@@ -1,0 +1,43 @@
+name: gjr_garch_vol
+description: >
+  GJR-GARCH(1,1,1) volatility targeting strategy.
+  GJR-GARCH extends standard GARCH with an asymmetric news-impact term (gamma),
+  allowing negative return shocks to increase conditional variance more than
+  positive shocks — the leverage effect documented in equity markets.
+
+  Variance equation:
+    sigma^2_t = omega + (alpha + gamma * I_{t-1}) * eps^2_{t-1} + beta * sigma^2_{t-1}
+    where I_{t-1} = 1 if eps_{t-1} < 0, else 0.
+
+  roll_window: 252 ensures the estimator receives a full year of observations,
+  which is required for numerically stable MLE of the five parameters
+  (omega, alpha, gamma, beta, plus distribution shape if non-normal).
+
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+estimator:
+  class: src.estimators.gjr_garch.GJRGARCH
+  params:
+    lookback: 252       # history window fed to MLE (matches roll_window below)
+    min_obs: 126        # half-year minimum — below this, EWMA fallback is used
+    vol_ann: 252
+    recal_freq: 63      # recalibrate every ~quarter (counter-based, not n%freq)
+    scale: 1000.0       # return scaling for MLE numerical stability
+    p: 1                # GARCH lag order (lagged conditional variances)
+    q: 1                # ARCH lag order  (lagged squared residuals)
+    o: 1                # GJR asymmetry order (leverage indicator terms)
+    dist: normal        # innovation distribution: normal | t | skewt
+    maxiter: 500
+    ewma_hl: 21         # EWMA half-life used during warm-up fallback period
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252        # KEY: tells engine to pass 252 rows to estimate_window

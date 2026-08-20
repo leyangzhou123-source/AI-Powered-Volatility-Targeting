@@ -1,0 +1,149 @@
+name: har_rv
+data:
+  symbol: ES.v.0
+  source: local_csv
+roll_window: 100
+target_vol: 0.1
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: har_rv__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: har_rv__naive_scaling
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: har_rv__constant_weight
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: har_rv__variance_scaling
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: har_rv__regime_switch
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: har_rv__vol_target_clip
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: har_rv__drawdown_brake
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: har_rv__trend_filter
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: har_rv__cvar_es_targeting
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: har_rv__hysteresis
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: har_rv__priority_stack
+    estimator:
+      class: src.estimators.HARRV
+      params:
+        returns_col: asset_returns
+        w_lookback: 5
+        m_lookback: 22
+        min_obs: 80
+        ridge_lambda: 1e-6
+        ann_factor: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

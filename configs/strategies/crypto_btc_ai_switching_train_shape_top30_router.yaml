@@ -1,0 +1,1344 @@
+name: btc_crypto_ai_regime_router
+description: AI-regime router over BTCUSD crypto volatility pairs
+data:
+  symbol: BTCUSD
+  path: data/processed/BTCUSD_daily.parquet
+  date_col: date
+  returns_col: log_return
+  price_col: close
+intraday_realized_vol:
+  enabled: true
+  path: data/processed/BTCUSD_intraday_volatility.parquet
+  lookback: 21
+pair_history_features:
+  enabled: true
+  path: results/crypto_btc_vol_pairs_oss20b
+  benchmark_path: results/crypto_btc_vol_pairs_oss20b/btc_realized_vol_20d__naive_scaling.parquet
+  lookbacks:
+  - 10
+  - 30
+  - 90
+target_vol: 0.35
+rebalance_freq: daily
+roll_window: 90
+weight_min: 0.0
+weight_max: 1.25
+cost_bps: 8.0
+vol_ann: 365
+router:
+  enabled: true
+  type: ai_regime
+  class: src.crypto_router.ai_vol_target_router.CryptoVolTargetAIRouter
+  params:
+    provider: nvidia
+    model: openai/gpt-oss-20b
+    api_format: chat_completions
+    api_key: ${NVAPI_KEY}
+    ai_enabled: true
+    fail_open: true
+    precomputed_ai_regime_path: ''
+    precomputed_ai_regime_only: false
+    max_ai_regime_calls: 100000
+    max_ai_selection_calls: 100000
+    max_total_ai_calls: 100000
+    ai_regime_interval: 20
+    ai_selection_interval: 20
+    candidate_top_n: 10
+    sensitiveness: high
+    sticky_period: 20
+    perf_weight: 1.5
+    lambda_drawdown: 0.5
+    lambda_switch: 0.15
+    lambda_invalid: 2.0
+    lambda_exception: 1.0
+    use_heuristic_regime_bias: false
+    regime_bias_weight: 3.0
+    max_output_tokens: 0
+    switch_decision_max_output_tokens: 0
+    selection_max_output_tokens: 0
+    timeout: 60.0
+    request_min_interval_seconds: 0.0
+    target_vol: 0.35
+    ann_factor: 365.0
+    asset_label: BTC
+    train_candidate_filter_enabled: true
+    train_candidate_pool_size: 30
+    initial_pair_rule: train_shape
+    deterministic_switch_decision: false
+    deterministic_pair_selection: false
+  pairs:
+  - name: btc_crypto_intraday_rv_1d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_intraday_rv_1d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_intraday_rv_1d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_intraday_rv_1d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_intraday_rv_1d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_intraday_rv_1d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 1
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_intraday_rv_3d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_intraday_rv_3d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_intraday_rv_3d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_intraday_rv_3d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_intraday_rv_3d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_intraday_rv_3d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 3
+        fallback_lookback: 20
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_intraday_rv_7d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_intraday_rv_7d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_intraday_rv_7d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_intraday_rv_7d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_intraday_rv_7d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_intraday_rv_7d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.IntradayRealizedVolEstimator
+      params:
+        lookback: 7
+        fallback_lookback: 30
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_range_gk_20d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_range_gk_20d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_range_gk_20d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_range_gk_20d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_range_gk_20d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_range_gk_20d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_range_gk_20d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_range_gk_20d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_range_gk_20d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_range_gk_20d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_range_gk_20d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_range_gk_60d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_range_gk_60d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_range_gk_60d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_range_gk_60d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_range_gk_60d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_range_gk_60d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_range_gk_60d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_range_gk_60d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_range_gk_60d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_range_gk_60d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_range_gk_60d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 60
+        method: garman_klass
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_range_parkinson_20d__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_range_parkinson_20d__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_range_parkinson_20d__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_range_parkinson_20d__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_range_parkinson_20d__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_range_parkinson_20d__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.RangeBasedVolEstimator
+      params:
+        lookback: 20
+        method: parkinson
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_composite_fast__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: &id001
+        - 0.6
+        - 0.2
+        - 0.2
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_composite_fast__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_composite_fast__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_composite_fast__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_composite_fast__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_composite_fast__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_composite_fast__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_composite_fast__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_composite_fast__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_composite_fast__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_composite_fast__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 10
+        ewma_halflife: 5
+        weights: *id001
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_composite_balanced__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: &id002
+        - 0.5
+        - 0.25
+        - 0.25
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_composite_balanced__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_composite_balanced__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_composite_balanced__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_composite_balanced__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_composite_balanced__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_composite_balanced__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_composite_balanced__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_composite_balanced__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_composite_balanced__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_composite_balanced__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 20
+        ewma_halflife: 10
+        weights: *id002
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25
+  - name: btc_crypto_composite_slow__naive_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: &id003
+        - 0.35
+        - 0.35
+        - 0.3
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: btc_crypto_composite_slow__hysteresis
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params:
+        deadband: 0.025
+        w_min: 0.0
+        w_max: 1.25
+  - name: btc_crypto_composite_slow__vol_target_clip
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params:
+        w_min: 0.0
+        w_max: 1.25
+        rebalance_threshold: 0.025
+  - name: btc_crypto_composite_slow__variance_scaling
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 90
+        no_trade_band: 0.025
+  - name: btc_crypto_composite_slow__drawdown_brake
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: btc_crypto_composite_slow__drawdown_modulated
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params: {}
+  - name: btc_crypto_composite_slow__priority_stack
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: btc_crypto_composite_slow__regime_switch
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: btc_crypto_composite_slow__trend_filter
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: btc_crypto_composite_slow__vol_shock_throttle
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.VolatilityShockThrottle
+      params:
+        no_trade_band: 0.025
+        shock_multiplier: 1.75
+        shock_cut: 0.5
+        max_step_up: 0.2
+  - name: btc_crypto_composite_slow__peg_aware_vol
+    estimator:
+      class: src.crypto_router.estimators.CryptoCompositeVolEstimator
+      params:
+        lookback: 60
+        ewma_halflife: 20
+        weights: *id003
+        vol_ann: 365
+        path: data/processed/BTCUSD_intraday_volatility.parquet
+    controller:
+      class: src.crypto_router.controllers.PegAwareVolController
+      params:
+        no_trade_band: 0.01
+        peg_deviation_soft: 0.0015
+        peg_deviation_hard: 0.006
+        max_step: 0.25

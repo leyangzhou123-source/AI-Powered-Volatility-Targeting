@@ -1,0 +1,2 @@
+strategy_name,ann_vol,ann_return,sharpe,max_dd,cvar,sortino,calmar,switch_count,independent_pair_use,source_csv
+SP500,0.10676025065431663,0.1569679568074882,1.470284641010643,0.12582618968643755,0.013193143671542479,1.905286378782684,1.247498292673861,12,5,research result/SP500/router_vs_bh_timeseries.csv

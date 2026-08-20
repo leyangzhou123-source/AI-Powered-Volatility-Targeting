@@ -1,0 +1,25 @@
+name: garch_11_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.GARCH
+  params:
+    p: 1
+    q: 1
+    vol_ann: 252
+    mean: Zero
+    dist: normal
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252

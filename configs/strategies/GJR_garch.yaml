@@ -1,0 +1,205 @@
+name: gjr_garch
+description: "GJR-GARCH(1,1,1) volatility targeting strategy. GJR-GARCH extends standard\
+  \ GARCH with an asymmetric news-impact term (gamma), allowing negative return shocks\
+  \ to increase conditional variance more than positive shocks \u2014 the leverage\
+  \ effect documented in equity markets.\nVariance equation:\n  sigma^2_t = omega\
+  \ + (alpha + gamma * I_{t-1}) * eps^2_{t-1} + beta * sigma^2_{t-1}\n  where I_{t-1}\
+  \ = 1 if eps_{t-1} < 0, else 0.\n\nroll_window: 252 ensures the estimator receives\
+  \ a full year of observations, which is required for numerically stable MLE of the\
+  \ five parameters (omega, alpha, gamma, beta, plus distribution shape if non-normal).\n"
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+target_vol: 0.1
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252
+router:
+  enabled: true
+  default_pair: gjr_garch__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: gjr_garch__naive_scaling
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: gjr_garch__constant_weight
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: gjr_garch__variance_scaling
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: gjr_garch__regime_switch
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: gjr_garch__vol_target_clip
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: gjr_garch__drawdown_brake
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: gjr_garch__trend_filter
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: gjr_garch__cvar_es_targeting
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: gjr_garch__hysteresis
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: gjr_garch__priority_stack
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        lookback: 252
+        min_obs: 126
+        vol_ann: 252
+        recal_freq: 63
+        scale: 1000.0
+        p: 1
+        q: 1
+        o: 1
+        dist: normal
+        maxiter: 500
+        ewma_hl: 21
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

@@ -1,0 +1,9 @@
+pair,days_selected
+xgb_vix__priority_stack_controller,456
+xgb_vix__vol_target_clip,220
+xgb_vix__hysteresis_controller,190
+xgb_vix__regime_switch_controller,30
+xgb_vix__trend_filter,10
+xgb_vix__drawdown_modulated_controller,10
+xgb_vix__naive_scaling,10
+xgb_vix__drawdown_brake,10

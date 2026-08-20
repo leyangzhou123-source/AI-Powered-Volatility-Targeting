@@ -1,0 +1,31 @@
+name: random_forest_vol
+description: Bounded random forest volatility estimator template for pair generation
+
+data:
+  path: data/processed/ES_Daily_Processed.parquet
+
+roll_window: 252
+target_vol: 0.10
+rebalance_freq: D
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+initial_capital: 1000.0
+
+estimator:
+  class: src.estimators.rf_vol.RandomForestVolEstimator
+  params:
+    n_estimators: 100
+    max_depth: 10
+    lags: [1, 5, 22]
+    train_window: 252
+    rv_window: 5
+    use_hmm: true
+    auto_tune: true
+    refit_every: 21
+    random_state: 42
+    n_jobs: 1
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}

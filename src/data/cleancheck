@@ -1,0 +1,106 @@
+# save as: export_winsor_report.py
+# run (from repo root):
+#   C:/Users/quebi/anaconda3/python.exe export_winsor_report.py
+# or:
+#   python export_winsor_report.py
+
+from __future__ import annotations
+
+from pathlib import Path
+import numpy as np
+import pandas as pd
+
+
+def main():
+    processed_path = Path("data/processed/ES_Daily_Processed.parquet")
+    out_path = Path("results") / "winsor_report.txt"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not processed_path.exists():
+        raise FileNotFoundError(f"Processed parquet not found: {processed_path.resolve()}")
+
+    df = pd.read_parquet(processed_path)
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index, errors="coerce")
+    df = df.sort_index()
+
+    required = {"returns", "returns_clean", "is_roll_day"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in parquet: {sorted(missing)}")
+
+    # Basic sanity
+    n_rows = len(df)
+    nan_returns = int(df["returns"].isna().sum())
+    nonfinite_returns = int((~np.isfinite(df["returns"])).sum())
+
+    # Winsor stats
+    extreme_mask = df["returns"] != df["returns_clean"]
+    n_extreme = int(extreme_mask.sum())
+    pct_extreme = (n_extreme / n_rows * 100.0) if n_rows else 0.0
+
+    # Implied winsor bounds (constant if quantile-based)
+    upper_bound = float(df["returns_clean"][extreme_mask & (df["returns"] > df["returns_clean"])].max()) if n_extreme else float("nan")
+    lower_bound = float(df["returns_clean"][extreme_mask & (df["returns"] < df["returns_clean"])].min()) if n_extreme else float("nan")
+
+    # Top extreme days by absolute return
+    extreme_df = df.loc[extreme_mask, ["returns", "returns_clean", "is_roll_day"]].copy()
+    extreme_df["abs_returns"] = extreme_df["returns"].abs()
+    extreme_df = extreme_df.sort_values("abs_returns", ascending=False)
+
+    # Helpful extra: distribution summaries
+    full_desc = df["returns"].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).to_string()
+    extreme_desc = df.loc[extreme_mask, "returns"].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).to_string()
+
+    # Build report text
+    lines: list[str] = []
+    lines.append("WINSORIZATION REPORT")
+    lines.append("=" * 80)
+    lines.append(f"Processed file: {processed_path.resolve()}")
+    lines.append(f"Rows: {n_rows:,}")
+    lines.append(f"Date range: {df.index.min().date()} -> {df.index.max().date()}")
+    lines.append("")
+    lines.append("SANITY CHECKS")
+    lines.append("-" * 80)
+    lines.append(f"NaN in returns: {nan_returns}")
+    lines.append(f"Non-finite in returns (inf/-inf): {nonfinite_returns}")
+    lines.append("")
+    lines.append("WINSOR SUMMARY")
+    lines.append("-" * 80)
+    lines.append(f"Extreme days adjusted (returns != returns_clean): {n_extreme} ({pct_extreme:.4f}%)")
+    if np.isfinite(lower_bound) and np.isfinite(upper_bound):
+        lines.append(f"Implied lower bound (clean): {lower_bound:.6f}  (~{lower_bound*100:.3f}%)")
+        lines.append(f"Implied upper bound (clean): {upper_bound:.6f}  (~{upper_bound*100:.3f}%)")
+    lines.append("")
+    lines.append("RETURNS DISTRIBUTION (FULL SAMPLE)")
+    lines.append("-" * 80)
+    lines.append(full_desc)
+    lines.append("")
+    lines.append("RETURNS DISTRIBUTION (EXTREME DAYS ONLY)")
+    lines.append("-" * 80)
+    lines.append(extreme_desc)
+    lines.append("")
+
+    lines.append("EXTREME DAYS (TOP 50 BY |returns|)")
+    lines.append("-" * 80)
+    # format as a small table
+    top_n = 50
+    show = extreme_df.head(top_n).copy()
+    show.index.name = "date"
+    show = show[["returns", "returns_clean", "is_roll_day", "abs_returns"]]
+    lines.append(show.to_string(float_format=lambda x: f"{x: .6f}"))
+    lines.append("")
+
+    lines.append("ALL EXTREME DATES (CHRONOLOGICAL)")
+    lines.append("-" * 80)
+    extreme_chrono = df.loc[extreme_mask, ["returns", "returns_clean"]].copy()
+    extreme_chrono.index.name = "date"
+    lines.append(extreme_chrono.to_string(float_format=lambda x: f"{x: .6f}"))
+    lines.append("")
+
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"✅ Report written to: {out_path.resolve()}")
+
+
+if __name__ == "__main__":
+    main()

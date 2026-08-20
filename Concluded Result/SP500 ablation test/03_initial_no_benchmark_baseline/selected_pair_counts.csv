@@ -1,0 +1,4 @@
+pair,days_selected
+xgb_vix__trend_filter,490
+xgb_vix__drawdown_brake,426
+xgb_vix__hysteresis_controller,20

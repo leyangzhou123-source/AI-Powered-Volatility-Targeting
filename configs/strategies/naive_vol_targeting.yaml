@@ -1,0 +1,22 @@
+name: naive_vol_targeting
+
+data:
+  symbol: ES.v.0
+  source: local
+  path: data/processed/ES_Daily_Processed.parquet
+
+estimator:
+  class: src.estimators.naive_vol.NaiveVolEstimator
+  params:
+    annualize: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+
+target_vol: 0.10
+cost_bps: 5.0
+weight_min: 0.0
+weight_max: 1.5
+rebalance_freq: D
+roll_window: 20
+initial_capital: 1000.0

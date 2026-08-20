@@ -1,0 +1,5 @@
+date,active_pair,portfolio_regime
+2024-02-09,expanding_covariance__equal_risk_contribution,balanced
+2024-10-14,expanding_covariance__regime_aware_risk_budget,balanced
+2025-02-10,pca_covariance__hysteresis_portfolio,balanced
+2025-04-23,pca_covariance__regime_aware_risk_budget,balanced

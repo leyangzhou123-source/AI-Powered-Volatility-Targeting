@@ -1,0 +1,27 @@
+name: dynamic_ensemble_naive
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+roll_window: 252
+
+estimator:
+  class: src.estimators.dynamic_ensemble.DynamicPrecisionEnsemble
+  params:
+    loss_window: 21
+    loss_metric: qlike
+    estimators:
+      - class: src.estimators.har_rv.HARRV
+        params: {w_lookback: 5, m_lookback: 22}
+      - class: src.estimators.gjr_garch.GJRGARCH
+        params: {lookback: 252, p: 1, o: 1, q: 1}
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: D
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

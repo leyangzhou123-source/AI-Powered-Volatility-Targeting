@@ -1,0 +1,2 @@
+strategy_name,ann_vol,ann_return,sharpe,max_dd,cvar,sortino,calmar,switch_count,independent_pair_use,source_csv
+multi asset,0.08567220426219994,0.13196117841470978,1.540303293829611,0.06603524897311719,0.011837642883478442,2.225995562394695,1.9983445276087457,12,6,research result/multi asset/result.csv

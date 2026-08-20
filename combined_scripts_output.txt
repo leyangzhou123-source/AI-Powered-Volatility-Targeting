@@ -1,0 +1,5736 @@
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\combine_scripts.py`
+**text** -
+
+```py
+import os
+from pathlib import Path
+
+def combine_files_to_txt(target_directory):
+    # Set up paths
+    folder_path = Path(target_directory)
+    output_filename = "combined_scripts_output.txt"
+    output_file_path = folder_path / output_filename
+    
+    # Define file extensions to ignore
+    ignored_extensions = {'.csv', '.parquet'}
+    
+    # Open the output file in write mode
+    with open(output_file_path, 'w', encoding='utf-8') as outfile:
+        
+        # rglob('*') searches all files in the directory and subdirectories.
+        # If you ONLY want the top-level folder, change `rglob('*')` to `iterdir()`
+        for file_path in folder_path.rglob('*'):
+            
+            # 1. Skip if it's a directory
+            if not file_path.is_file():
+                continue
+                
+            # 2. Skip the output file itself so we don't cause an infinite loop
+            if file_path.name == output_filename:
+                continue
+                
+            # 3. Skip ignored extensions
+            if file_path.suffix.lower() in ignored_extensions:
+                continue
+            
+            # 4. Skip empty files (0 bytes)
+            if file_path.stat().st_size == 0:
+                continue
+                
+            try:
+                # Read the content of the file
+                with open(file_path, 'r', encoding='utf-8') as infile:
+                    content = infile.read()
+                    
+                # 5. Skip if the file only contains whitespace/blank lines
+                if not content.strip():
+                    continue
+                    
+                # Get the extension without the dot for the markdown code block (e.g., 'yaml', 'py')
+                ext = file_path.suffix.lstrip('.')
+                if not ext:
+                    ext = 'text' # Default fallback
+                    
+                # Write to the output file using your exact requested format
+                outfile.write(f"**File Name** - `{file_path}`\n")
+                outfile.write("**text** -\n\n")
+                outfile.write(f"```{ext}\n")
+                outfile.write(content)
+                
+                # Ensure there's a newline before closing the code block
+                if not content.endswith('\n'):
+                    outfile.write('\n')
+                    
+                outfile.write("```\n\n---\n\n")
+                
+            except UnicodeDecodeError:
+                # Silently skip binary files (like images, .pyc, etc.) that can't be read as text
+                pass
+            except Exception as e:
+                print(f"Could not read {file_path.name}: {e}")
+
+    print(f"Done! Combined file saved to: {output_file_path}")
+
+if __name__ == "__main__":
+    # os.getcwd() gets the directory where the script is being run from.
+    # As long as you run this script from inside the "JPM week 6_1st_version" folder, 
+    # it will target that folder.
+    current_folder = os.getcwd()
+    combine_files_to_txt(current_folder)
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\pyproject.toml`
+**text** -
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "voltarget"
+version = "0.1.0"
+description = "Volatility targeting strategies for systematic portfolios"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "UIUC Practicum Team" }
+]
+keywords = ["volatility", "targeting", "quantitative", "finance", "backtesting"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "pyyaml>=6.0",
+    "pyarrow>=12.0",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+    "python-dotenv>=1.0",
+    "jupyter>=1.0",
+    "ipykernel>=6.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+    "pandas-stubs>=2.0",
+    "types-PyYAML>=6.0",
+]
+ar = [
+    "statsmodels>=0.14",
+]
+garch = [
+    "arch>=6.0",
+]
+ml = [
+    "scikit-learn>=1.3",
+    "lightgbm>=4.0",
+]
+hmm = [
+    "hmmlearn>=0.3",
+]
+databento = [
+    "databento>=0.20",
+]
+all = [
+    "voltarget[dev,ar,garch,ml,hmm,databento]",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/configs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "arch.*",
+    "hmmlearn.*",
+    "lightgbm.*",
+    "databento.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\README.md`
+**text** -
+
+```md
+# JPM-Volatility-Targeting
+
+.
+├── configs/                # Strategy configuration files
+│   └── strategies/         # Model-specific YAML configs (GARCH, EWMA, AR1, etc.)
+├── src/                    # Core source code
+│   ├── estimators/         # Volatility forecasting models (Realized Vol, EWMA, EGARCH, GARCH, etc.)
+│   ├── controllers/        # Exposure control & leverage logic (Naive Scaling, Constant Weight)
+│   ├── backtest/           # Backtesting engine core (engine.py, base classes)
+│   ├── data/               # Data ingestion & ETL pipeline (importers, processors)
+│   └── evaluation/         # Performance metrics & diagnostic tools
+├── scripts/                # Execution & CLI scripts
+│   ├── run_backtests.py    # Batch execution of backtesting suites
+│   ├── analysus_result.py  # Automated 4-dimensional diagnostic report generation
+│   ├── run_processors.py   # Execution of data cleaning & processing pipelines
+│   └── tune_strategy.py    # Hyperparameter optimization & strategy tuning
+├── data/                   # Data storage for Raw and Processed (Parquet) datasets
+└── Literature-Review/      # Academic papers on Volatility-Managed Portfolios (Moreira, Harvey, etc.)
+
+
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\show_structure.py`
+**text** -
+
+```py
+import os
+
+
+def list_files(startpath):
+    exclude = {'.git', '__pycache__', 'venv', '.ipynb_checkpoints', 'results'}
+
+    for root, dirs, files in os.walk(startpath):
+        dirs[:] = [d for d in dirs if d not in exclude]
+
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print(f'{indent}📂 {os.path.basename(root)}/')
+
+        sub_indent = ' ' * 4 * (level + 1)
+        for f in files:
+            if not f.startswith('.'):
+                print(f'{sub_indent} {f}')
+
+
+if __name__ == "__main__":
+    project_path = os.getcwd()
+    print(f"\n🚀 Preview: {project_path}\n" + "=" * 50)
+    list_files(project_path)
+    print("=" * 50)
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\analysus_result.py`
+**text** -
+
+```py
+import sys
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+import re
+
+# Ensure src can be imported
+root_dir = Path(__file__).resolve().parents[1]
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
+from src.env import Env
+from src.evaluation.precision_metrics import evaluate_vol_forecast
+
+
+# ============================================================
+# Helpers
+# ============================================================
+def estimator_key_from_name(strategy_name: str) -> str:
+    
+    return strategy_name.split("_")[0]
+
+def reduce_to_one_per_estimator(data_map, prefer=("naive", "buy_and_hold")):
+    grouped = {}
+    for strat_name, df in data_map.items():
+        est = estimator_key_from_name(strat_name)
+        grouped.setdefault(est, []).append((strat_name, df))
+
+    reduced = {}
+    for est, items in grouped.items():
+        picked = None
+        for tag in prefer:
+            for name, df in items:
+                if tag in name.lower():
+                    picked = (name, df)
+                    break
+            if picked:
+                break
+        if picked is None:
+            picked = items[0]
+        reduced[est] = picked[1]  
+    return reduced
+def get_data():
+    results_dir = Env.path("results")
+    files = list(results_dir.glob("*.parquet"))
+    data_map = {}
+    for f in files:
+        try:
+            data_map[f.stem] = pd.read_parquet(f)
+        except Exception as e:
+            print(f"⚠️ Failed to read {f.name}: {e}")
+    return data_map, results_dir
+
+
+def pick_strategy_returns(df: pd.DataFrame) -> pd.Series:
+    """Return strategy PnL series (used for Sharpe etc.)."""
+    if "strategy_returns" in df.columns:
+        return df["strategy_returns"]
+    if "returns" in df.columns:
+        return df["returns"]
+    return pd.Series(index=df.index, dtype=float)
+
+
+def pick_underlying_returns(df: pd.DataFrame) -> tuple[pd.Series | None, str]:
+    """
+    Return underlying return series for realized proxy in forecast evaluation.
+    Prefer asset_returns (new engine). Fallbacks kept for backward compatibility.
+    """
+    if "asset_returns" in df.columns:
+        return df["asset_returns"], "asset_returns"
+    if "returns_clean" in df.columns:
+        return df["returns_clean"], "returns_clean"
+    if "returns_raw" in df.columns:
+        return df["returns_raw"], "returns_raw"
+    if "returns" in df.columns:
+        return df["returns"], "returns"
+    return None, "missing"
+
+
+def safe_mean(x: np.ndarray) -> float:
+    x = x[np.isfinite(x)]
+    return float(np.mean(x)) if x.size > 0 else float("nan")
+
+
+def safe_percentile(x: pd.Series, q: float) -> float:
+    arr = x.to_numpy()
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return float("nan")
+    return float(np.percentile(arr, q))
+def realized_vol_proxy(under: pd.Series, window=21, ann_factor=252.0) -> pd.Series:
+    
+    rv = under.rolling(window).std() * np.sqrt(ann_factor)
+    return rv
+
+def qlike_series(rv: pd.Series, vol_hat: pd.Series) -> pd.Series:
+    r = (rv ** 2).astype(float)
+    h = (vol_hat ** 2).astype(float)
+    m = pd.concat([r, h], axis=1).dropna()
+    r2 = m.iloc[:, 0].clip(lower=1e-18)
+    h2 = m.iloc[:, 1].clip(lower=1e-18)
+    return np.log(h2) + (r2 / h2)
+
+
+# ============================================================
+# Plots
+# ============================================================
+def plot_dim1_returns(data_map, output_path):
+    n_strat = len(data_map)
+    fig_height = max(8, 4 + 0.6 * n_strat)
+
+    fig, (ax, ax_tbl) = plt.subplots(
+        2, 1,
+        figsize=(15, fig_height),
+        gridspec_kw={"height_ratios": [3, 1]},
+        constrained_layout=True
+    )
+    metrics_data = []
+
+    for name, df in data_map.items():
+        rets = pick_strategy_returns(df).fillna(0)
+        equity = df.get("equity_curve", None)
+
+        if equity is None:
+            # If no equity curve, build from returns
+            equity = 1000.0 * np.exp(np.cumsum(rets.fillna(0).values))
+            equity = pd.Series(equity, index=df.index)
+
+        ann_ret = safe_mean(rets.values) * 252
+        ann_vol = float(np.nanstd(rets.values, ddof=0)) * np.sqrt(252)
+        sharpe = ann_ret / ann_vol if np.isfinite(ann_vol) and ann_vol > 0 else 0.0
+
+        downside = rets[rets < 0].values
+        downside_std = float(np.nanstd(downside, ddof=0)) * np.sqrt(252) if downside.size > 0 else float("nan")
+        sortino = ann_ret / downside_std if np.isfinite(downside_std) and downside_std > 0 else 0.0
+
+        dd = (equity / equity.cummax() - 1)
+        max_dd = float(np.nanmin(dd.values)) if len(dd) else float("nan")
+        calmar = ann_ret / abs(max_dd) if np.isfinite(max_dd) and max_dd != 0 else 0.0
+
+        ax.plot(df.index, equity, label=f"{name}")
+        metrics_data.append(
+            [name, f"{sharpe:.2f}", f"{sortino:.2f}", f"{calmar:.2f}", f"{(equity.iloc[-1] / 1000 - 1):.2%}"]
+        )
+
+    ax.set_title("Dimension 1: Risk-Adjusted Returns (Sharpe / Sortino / Calmar)", fontsize=16)
+    ax.legend()
+
+    ax_tbl.axis("off")
+    table = ax_tbl.table(
+        cellText=metrics_data,
+        colLabels=["Strategy Name", "Sharpe Ratio", "Sortino Ratio", "Calmar Ratio", "Total Return"],
+        loc="center",
+        cellLoc="center",
+    )
+    table.scale(1, 2)
+    plt.savefig(output_path / "1_Risk_Adjusted_Returns.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_dim2_vol(data_map, output_path):
+    n_strat = len(data_map)
+    fig_height = max(8, 4 + 0.6 * n_strat)
+
+    fig, (ax, ax_tbl) = plt.subplots(
+        2, 1,
+        figsize=(15, fig_height),
+        gridspec_kw={"height_ratios": [3, 1]},
+        constrained_layout=True
+    )
+    metrics_data = []
+
+    for name, df in data_map.items():
+        # realized vol proxy should be based on underlying returns
+        rets = pick_strategy_returns(df)
+        rolling_vol = rets.rolling(21).std() * np.sqrt(252)
+        realized_mean = float(np.nanmean(rolling_vol.values)) if np.isfinite(rolling_vol.values).any() else float("nan")
+        vol_cv = (float(np.nanstd(rolling_vol.values)) / realized_mean) if np.isfinite(realized_mean) and realized_mean > 0 else float("nan")
+
+        if "vol_estimate" in df.columns:
+            ax.scatter(df["vol_estimate"], rolling_vol, alpha=0.3, s=10, label=name)
+
+        metrics_data.append([name, f"{realized_mean:.2%}" if np.isfinite(realized_mean) else "nan",
+                             f"{vol_cv:.4f}" if np.isfinite(vol_cv) else "nan",
+                             f"{(realized_mean - 0.10):.2%}" if np.isfinite(realized_mean) else "nan"])
+
+    ax.plot([0.05, 0.25], [0.05, 0.25], "k--", alpha=0.5, label="Ideal Control")
+    ax.set_title("Dimension 2: Volatility Control Ability (Vol CV)", fontsize=16)
+    ax.set_xlabel("Estimated Volatility")
+    ax.set_ylabel("Realized Volatility")
+    ax.legend()
+
+    ax_tbl.axis("off")
+    table = ax_tbl.table(
+        cellText=metrics_data,
+        colLabels=["Strategy Name", "Avg Realized Vol", "Vol CV", "Target Deviation"],
+        loc="center",
+        cellLoc="center",
+    )
+    table.scale(1, 2)
+    plt.savefig(output_path / "2_Vol_Control.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_dim3_risk(data_map, output_path):
+    n_strat = len(data_map)
+    fig_height = max(8, 4 + 0.6 * n_strat)
+
+    fig, (ax, ax_tbl) = plt.subplots(
+        2, 1,
+        figsize=(15, fig_height),
+        gridspec_kw={"height_ratios": [3, 1]},
+        constrained_layout=True
+    )
+    metrics_data = []
+
+    for name, df in data_map.items():
+        equity = df.get("equity_curve", None)
+        if equity is None:
+            rets = pick_strategy_returns(df).fillna(0)
+            equity = 1000.0 * np.exp(np.cumsum(rets.values))
+            equity = pd.Series(equity, index=df.index)
+
+        dd = (equity / equity.cummax() - 1)
+
+        # VaR based on STRATEGY returns (extreme loss of strategy)
+        strat_rets = pick_strategy_returns(df).fillna(0)
+        var_95 = safe_percentile(strat_rets, 5)
+
+        # Ulcer index
+        ui = np.sqrt(safe_mean(np.square(dd.values)))
+
+        stress_days = int((dd < -0.05).sum())
+
+        ax.fill_between(df.index, dd, 0, alpha=0.3, label=name)
+
+        metrics_data.append([
+            name,
+            f"{float(np.nanmin(dd.values)):.2%}" if np.isfinite(dd.values).any() else "nan",
+            f"{ui:.4f}" if np.isfinite(ui) else "nan",
+            f"{var_95:.2%}" if np.isfinite(var_95) else "nan",
+            f"{stress_days} Days"
+        ])
+
+    ax.set_title("Dimension 3: Extreme Risk Metrics (MaxDD / Ulcer / VaR)", fontsize=16)
+    ax.set_ylabel("Drawdown")
+    ax.legend()
+
+    ax_tbl.axis("off")
+    table = ax_tbl.table(
+        cellText=metrics_data,
+        colLabels=["Strategy Name", "Max Drawdown", "Ulcer Index", "VaR (95%)", "Days with DD > 5%"],
+        loc="center",
+        cellLoc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 2)
+    plt.savefig(output_path / "3_Extreme_Risk.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def plot_dim4_costs(data_map, output_path):
+    n_strat = len(data_map)
+
+    fig_height = max(8, 4 + 0.6 * n_strat)
+
+    fig, (ax, ax_tbl) = plt.subplots(
+        2, 1,
+        figsize=(15, fig_height),
+        gridspec_kw={"height_ratios": [3, 1]},
+        constrained_layout=True
+    )
+
+    metrics_data = []
+    names = []
+    turnovers = []
+
+    for name, df in data_map.items():
+        if "weight" not in df.columns:
+            continue
+
+        turnover = float(np.nanmean(df["weight"].diff().abs().values))
+        strat_rets = pick_strategy_returns(df)
+
+        pos_rets = strat_rets[strat_rets > 0]
+        neg_rets = strat_rets[strat_rets < 0]
+
+        if len(pos_rets) > 0 and len(neg_rets) > 0:
+            win_loss = float(pos_rets.mean() / abs(neg_rets.mean()))
+        else:
+            win_loss = float("nan")
+
+        win_rate = float(len(pos_rets) / len(strat_rets)) if len(strat_rets) > 0 else float("nan")
+
+        names.append(name)
+        turnovers.append(turnover)
+
+        metrics_data.append([
+            name,
+            f"{turnover:.2%}" if np.isfinite(turnover) else "nan",
+            f"{win_loss:.2f}" if np.isfinite(win_loss) else "nan",
+            f"{win_rate:.2%}" if np.isfinite(win_rate) else "nan"
+        ])
+
+    # Bar plot
+    x = np.arange(len(names))
+    ax.bar(x, turnovers, alpha=0.7)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=45, ha="right")
+    ax.set_title("Dimension 4: Trading Efficiency (Turnover / Win-Loss Ratio)", fontsize=16)
+    ax.set_ylabel("Avg Daily Turnover")
+
+    # Add small margin at top
+    ax.margins(y=0.15)
+
+ 
+    ax_tbl.axis("off")
+    table = ax_tbl.table(
+        cellText=metrics_data,
+        colLabels=["Strategy Name", "Turnover", "Win-Loss Ratio", "Win Rate"],
+        loc="center",
+        cellLoc="center",
+    )
+
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)
+
+    fig.savefig(output_path / "4_Trading_Costs.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+
+
+def plot_precision_table(data_map, output_path, ann_factor=252.0):
+    rows = []
+    warnings = []
+
+    for name, df in data_map.items():
+        if "vol_estimate" not in df.columns:
+            warnings.append(f"{name}: missing vol_estimate (skip precision metrics)")
+            continue
+
+        under, src = pick_underlying_returns(df)
+        if under is None:
+            warnings.append(f"{name}: missing underlying returns series (skip)")
+            continue
+
+        # If we had to fallback to "returns", warn because it might be strategy PnL in old files
+        if src == "returns" and "asset_returns" not in df.columns and "returns_clean" not in df.columns:
+            warnings.append(f"{name}: using df['returns'] fallback (verify this is UNDERLYING returns)")
+
+        # evaluate_vol_forecast expects finite pairs
+        m = evaluate_vol_forecast(
+            returns=under,
+            vol_hat=df["vol_estimate"],
+            ann_factor=ann_factor,
+        )
+
+        # Guard: if metrics are empty/invalid, skip instead of crashing later
+        if m is None or (isinstance(m, dict) and m.get("n", 0) == 0):
+            warnings.append(f"{name}: precision metrics empty (n=0), skipped")
+            continue
+
+        m["strategy"] = name
+        rows.append(m)
+
+    out = pd.DataFrame(rows)
+    if out.empty:
+        print("❌ No valid strategies for precision table.")
+        if warnings:
+            print("\n⚠️ Warnings:")
+            for w in warnings:
+                print(" -", w)
+        return
+
+    out = out.set_index("strategy")
+
+    cols = [
+        "n",
+        "qlike",
+        "mse_var",
+        "mae_vol",
+        "oos_r2_var_vs_const",
+        "mz_alpha",
+        "mz_beta",
+        "mz_r2",
+    ]
+    cols = [c for c in cols if c in out.columns]
+
+    # sort (qlike lower better) if exists
+    if "qlike" in out.columns:
+        out = out[cols].sort_values("qlike", ascending=True)
+    else:
+        out = out[cols]
+
+    # save CSV
+    out.to_csv(output_path / "precision_metrics.csv")
+
+    # display formatting
+    disp = out.copy()
+    if "n" in disp.columns:
+        disp["n"] = disp["n"].fillna(0).astype(int)
+
+    for c in disp.columns:
+        if c != "n":
+            disp[c] = disp[c].map(lambda x: f"{x:.4f}" if pd.notna(x) and np.isfinite(x) else "nan")
+
+    nrows, ncols = disp.shape
+    fig_w = max(10, 1.2 * (ncols + 3))
+    fig_h = max(2.5, 0.6 * (nrows + 3))
+
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+    ax.axis("off")
+    ax.set_title("Volatility Estimation Precision Metrics (Forecast vs Realized Proxy)", fontsize=14, pad=12)
+
+    table = ax.table(
+        cellText=disp.values,
+        rowLabels=disp.index.tolist(),
+        colLabels=disp.columns.tolist(),
+        loc="center",
+        cellLoc="center",
+        rowLoc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.0, 1.6)
+
+    fig.tight_layout()
+    fig.savefig(output_path / "table.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+    print(f"✅ Saved precision table CSV: {output_path / 'precision_metrics.csv'}")
+    print(f"✅ Saved precision table PNG : {output_path / 'table.png'}")
+
+    if warnings:
+        print("\n⚠️ Warnings:")
+        for w in warnings:
+            print(" -", w)
+
+
+# ============================================================
+# Meta Analysis (fix empty slice)
+# ============================================================
+def plot_meta_analysis(data_map, output_path):
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    names = []
+    sharpes = []
+    qlikes = []
+
+    for name, df in data_map.items():
+        if "vol_estimate" not in df.columns:
+            continue
+
+        # Profitability (Sharpe) should be strategy returns
+        rets = pick_strategy_returns(df).fillna(0).values
+        ann_ret = safe_mean(rets) * 252
+        ann_vol = float(np.nanstd(rets, ddof=0)) * np.sqrt(252)
+        sharpe = ann_ret / ann_vol if np.isfinite(ann_vol) and ann_vol > 0 else 0.0
+
+        # Precision (QLIKE) should use underlying returns proxy
+        under, _ = pick_underlying_returns(df)
+        if under is None:
+            continue
+
+        metrics = evaluate_vol_forecast(
+            returns=under,
+            vol_hat=df["vol_estimate"],
+            ann_factor=252.0,
+        )
+        qlike = metrics.get("qlike", np.nan) if isinstance(metrics, dict) else np.nan
+        if not np.isfinite(qlike):
+            continue
+
+        names.append(name)
+        sharpes.append(sharpe)
+        qlikes.append(qlike)
+
+        ax.scatter(qlike, sharpe, s=150, alpha=0.8, label=name)
+        ax.text(qlike, sharpe + 0.02, name, fontsize=10, ha="center")
+
+    ax.set_title("Meta-Analysis: Statistical Precision vs. Profitability", fontsize=14, fontweight="bold")
+    ax.set_xlabel("Forecast Error (QLIKE Loss - Lower is Better) ⬅️")
+    ax.set_ylabel("Profitability (Sharpe Ratio - Higher is Better) ⬆️")
+    ax.grid(True, linestyle="--", alpha=0.6)
+
+    # quadrant lines only if non-empty
+    if len(sharpes) > 0:
+        ax.axhline(y=float(np.mean(sharpes)), color="k", linestyle="--", alpha=0.3)
+    if len(qlikes) > 0:
+        ax.axvline(x=float(np.mean(qlikes)), color="k", linestyle="--", alpha=0.3)
+
+    plt.savefig(output_path / "5_Meta_Analysis.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"✅ Saved Meta-Analysis plot to: {output_path / '5_Meta_Analysis.png'}")
+
+def plot_precision_timeseries(data_map, output_path, window=21, ann_factor=252.0, top_k=5):
+    rows = []
+    series = {}
+
+    for name, df in data_map.items():
+        if "vol_estimate" not in df.columns:
+            continue
+        under, _ = pick_underlying_returns(df)
+        if under is None:
+            continue
+
+        rv = realized_vol_proxy(under, window=window, ann_factor=ann_factor)
+        vh = pd.Series(df["vol_estimate"], index=df.index)
+        loss = qlike_series(rv, vh)
+        score = float(np.nanmean(loss.values)) if len(loss) else np.nan
+        rows.append((name, score))
+        series[name] = (rv, vh)
+
+    if not rows:
+        return
+
+    rows = sorted(rows, key=lambda x: x[1])
+    keep = [n for n, _ in rows[:top_k]]
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+    # plot realized once (common axis)
+    rv0 = series[keep[0]][0]
+    ax.plot(rv0.index, rv0.values, linewidth=2, label=f"Realized vol proxy")
+
+    for name in keep:
+        rv, vh = series[name]
+        ax.plot(vh.index, vh.values, alpha=0.8, label=name)
+
+    ax.set_title("Forecast Vol vs Realized Vol Proxy")
+    ax.set_ylabel("Annualized Vol")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path / "P_TS_Forecast_vs_Realized.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+def plot_precision_calibration(data_map, output_path, window=21, ann_factor=252.0, n_bins=10):
+    fig, ax = plt.subplots(figsize=(10, 7))
+    ax.plot([0, 0.5], [0, 0.5], "k--", alpha=0.5, label="Perfect calibration")
+
+    for name, df in data_map.items():
+        if "vol_estimate" not in df.columns:
+            continue
+        under, _ = pick_underlying_returns(df)
+        if under is None:
+            continue
+
+        rv = realized_vol_proxy(under, window=window, ann_factor=ann_factor)
+        vh = pd.Series(df["vol_estimate"], index=df.index)
+
+        m = pd.concat([vh.rename("vh"), rv.rename("rv")], axis=1).dropna()
+        if len(m) < 50:
+            continue
+
+        # decile bins by forecast
+        m["bin"] = pd.qcut(m["vh"], q=n_bins, duplicates="drop")
+        grp = m.groupby("bin").agg(vh_mean=("vh", "mean"), rv_mean=("rv", "mean"))
+
+        ax.plot(grp["vh_mean"].values, grp["rv_mean"].values, marker="o", alpha=0.8, label=name)
+
+    ax.set_title(f"Calibration Plot: Mean Realized Vol vs Mean Forecast Vol")
+    ax.set_xlabel("Mean forecast vol")
+    ax.set_ylabel("Mean realized vol proxy")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path / "P_Calibration.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+def plot_precision_by_regime(data_map, output_path, window=21, ann_factor=252.0):
+    rows = []
+    regimes = ["Low", "Mid", "High"]
+
+    for name, df in data_map.items():
+        if "vol_estimate" not in df.columns:
+            continue
+        under, _ = pick_underlying_returns(df)
+        if under is None:
+            continue
+
+        rv = realized_vol_proxy(under, window=window, ann_factor=ann_factor)
+        vh = pd.Series(df["vol_estimate"], index=df.index)
+
+        loss = qlike_series(rv, vh)
+        m = pd.concat([rv.rename("rv"), loss.rename("loss")], axis=1).dropna()
+        if len(m) < 100:
+            continue
+
+        q1, q2 = m["rv"].quantile([0.33, 0.66]).values
+        low = m[m["rv"] <= q1]["loss"].mean()
+        mid = m[(m["rv"] > q1) & (m["rv"] <= q2)]["loss"].mean()
+        high = m[m["rv"] > q2]["loss"].mean()
+
+        rows.append([name, low, mid, high])
+
+    if not rows:
+        return
+
+    out = pd.DataFrame(rows, columns=["strategy"] + regimes).set_index("strategy")
+    out = out.sort_values("High")  # focus on high-vol regime
+
+    fig, ax = plt.subplots(figsize=(14, 6))
+    x = np.arange(len(out.index))
+    width = 0.25
+    ax.bar(x - width, out["Low"].values, width, label="Low")
+    ax.bar(x,         out["Mid"].values, width, label="Mid")
+    ax.bar(x + width, out["High"].values, width, label="High")
+    ax.set_xticks(x)
+    ax.set_xticklabels(out.index, rotation=45, ha="right")
+    ax.set_title("Regime Precision: Average QLIKE Loss by Realized-Vol Regime")
+    ax.set_ylabel("Avg QLIKE loss")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path / "P_Regime_QLIKE.png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    data, path = get_data()
+    plot_dim1_returns(data, path)
+    plot_dim2_vol(data, path)
+    plot_dim3_risk(data, path)
+    plot_dim4_costs(data, path)
+    plot_meta_analysis(data, path)
+    data_map_est = reduce_to_one_per_estimator(data)
+    plot_precision_table(data_map_est, path)
+    plot_precision_timeseries(data_map_est, path)
+    plot_precision_calibration(data_map_est, path)
+    plot_precision_by_regime(data_map_est, path)
+    print(f"Analysis plots generated successfully at: {path}")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\compare_table.py`
+**text** -
+
+```py
+"""
+Controller Comparison Report
+==============================
+Reads all strategy YAML configs to detect estimator/controller pairings,
+computes key metrics from saved parquet results, and outputs:
+  - results/controller_comparison.xlsx  (formatted Excel)
+  - results/controller_comparison.png   (publication-ready PNG table)
+
+Usage:
+    python scripts/controller_comparison.py
+"""
+
+import sys
+import yaml
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.colors import to_rgba
+
+# ── path setup ────────────────────────────────────────────────────────────────
+root_dir = Path(__file__).resolve().parents[1]
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
+
+from src.env import Env
+
+# ── display name mappings ─────────────────────────────────────────────────────
+ESTIMATOR_LABELS = {
+    "EGARCH":      "EGARCH",
+    "GJRGARCH":    "GJR-GARCH",
+    "GARCH":       "GARCH",
+    "EWMA":        "EWMA",
+    "RealizedVol": "Realized Vol",
+    "AR1":         "AR1",
+    "BuyAndHold":  "Buy & Hold",
+}
+
+CONTROLLER_LABELS = {
+    "NaiveScaling":           "Naïve",
+    "VarianceScaling":        "Variance Scaled",
+    "RegimeSwitchController": "Regime Switch",
+    "ConstantWeight":         "Constant Weight",
+}
+
+CONTROLLER_ORDER = ["Naïve", "Variance Scaled", "Regime Switch", "Constant Weight"]
+ESTIMATOR_ORDER  = ["GJR-GARCH", "EGARCH", "GARCH", "EWMA", "Realized Vol", "AR1", "Buy & Hold"]
+METRICS          = ["Sharpe", "Annual Vol", "Annual Return", "Max DD"]
+
+# Colours shared between Excel and PNG
+DARK_BLUE  = "1F3864"
+MID_BLUE   = "2E5FAC"
+LIGHT_BLUE = "D6E4F0"
+WHITE      = "FFFFFF"
+
+METRIC_COLORS = {
+    "Sharpe":        "1F497D",
+    "Annual Vol":    "375623",
+    "Annual Return": "7F3F00",
+    "Max DD":        "632523",
+}
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+def _hex(h: str):
+    """Convert 6-char hex string to matplotlib rgba tuple."""
+    h = h.lstrip("#")
+    return to_rgba(f"#{h}")
+
+def _class_label(class_path: str, mapping: dict) -> str:
+    class_name = class_path.rsplit(".", 1)[-1]
+    return mapping.get(class_name, class_name)
+
+def load_configs() -> list[dict]:
+    strategies_dir = Env.path("strategies")
+    configs = []
+    for p in strategies_dir.glob("*.yaml"):
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                cfg = yaml.safe_load(f)
+            if cfg:
+                cfg["_yaml_path"] = p
+                configs.append(cfg)
+        except Exception as e:
+            print(f"  ⚠️  Could not read {p.name}: {e}")
+    return configs
+
+def compute_metrics(df: pd.DataFrame) -> dict:
+    rets    = df["returns"].fillna(0.0)
+    ann_ret = float(rets.mean() * 252)
+    ann_vol = float(rets.std() * np.sqrt(252))
+    sharpe  = ann_ret / ann_vol if ann_vol > 0 else np.nan
+
+    equity = df.get("equity_curve", None)
+    if equity is None:
+        equity = pd.Series(1000.0 * np.exp(np.cumsum(rets.values)), index=df.index)
+
+    dd    = equity / equity.cummax() - 1
+    max_dd = float(dd.min())
+    ulcer  = float(np.sqrt(np.mean(dd.values ** 2)))
+
+    return {
+        "Sharpe":        round(sharpe,  3),
+        "Annual Vol":    round(ann_vol, 4),
+        "Annual Return": round(ann_ret, 4),
+        "Max DD":        round(max_dd,  4),
+        "Ulcer Index":   round(ulcer,   4),
+    }
+
+def build_data_table():
+    results_dir = Env.path("results")
+    configs     = load_configs()
+    rows        = {}
+
+    for cfg in configs:
+        strat_name = cfg.get("name", "")
+        est_path   = cfg.get("estimator", {}).get("class", "")
+        ctrl_path  = cfg.get("controller", {}).get("class", "")
+        est_label  = _class_label(est_path,  ESTIMATOR_LABELS)
+        ctrl_label = _class_label(ctrl_path, CONTROLLER_LABELS)
+
+        result_path = results_dir / f"{strat_name}.parquet"
+        if not result_path.exists():
+            print(f"  ⚠️  No result for '{strat_name}' — run backtest first.")
+            continue
+
+        try:
+            df      = pd.read_parquet(result_path)
+            metrics = compute_metrics(df)
+        except Exception as e:
+            print(f"  ⚠️  Could not compute metrics for '{strat_name}': {e}")
+            continue
+
+        rows.setdefault(est_label, {})
+        for metric, value in metrics.items():
+            rows[est_label][(metric, ctrl_label)] = value
+
+    if not rows:
+        raise ValueError("No results found. Run run_backtests.py first.")
+
+    all_controllers = sorted(
+        {ctrl for vals in rows.values() for _, ctrl in vals.keys()},
+        key=lambda c: CONTROLLER_ORDER.index(c) if c in CONTROLLER_ORDER else 999,
+    )
+    estimators = sorted(
+        rows.keys(),
+        key=lambda e: ESTIMATOR_ORDER.index(e) if e in ESTIMATOR_ORDER else 999,
+    )
+
+    multi_cols = pd.MultiIndex.from_product([METRICS, all_controllers])
+    table = pd.DataFrame(index=estimators, columns=multi_cols, dtype=object)
+    for est, vals in rows.items():
+        for (metric, ctrl), value in vals.items():
+            if (metric, ctrl) in table.columns:
+                table.loc[est, (metric, ctrl)] = value
+
+    return table, all_controllers
+
+
+# ── Excel writer ──────────────────────────────────────────────────────────────
+
+def _side(style="thin"):
+    return Side(border_style=style, color="000000")
+
+def _border(top=None, bottom=None, left=None, right=None):
+    return Border(top=top, bottom=bottom, left=left, right=right)
+
+def write_excel(table: pd.DataFrame, controllers: list[str], out_path: Path):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Controller Comparison"
+
+    n_ctrl = len(controllers)
+    n_met  = len(METRICS)
+    n_est  = len(table.index)
+
+    ws.column_dimensions["A"].width = 18
+    for col_i in range(2, 2 + n_met * n_ctrl):
+        ws.column_dimensions[get_column_letter(col_i)].width = 15
+
+    # Row 1: title
+    ws.row_dimensions[1].height = 28
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=1 + n_met * n_ctrl)
+    tc = ws.cell(row=1, column=1, value="Controller Comparison — Key Performance Metrics")
+    tc.font      = Font(bold=True, size=14, color=WHITE, name="Arial")
+    tc.fill      = PatternFill("solid", fgColor=DARK_BLUE)
+    tc.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Row 2: metric group headers
+    ws.row_dimensions[2].height = 22
+    corner = ws.cell(row=2, column=1, value="Estimator")
+    corner.font      = Font(bold=True, color=WHITE, name="Arial")
+    corner.fill      = PatternFill("solid", fgColor=DARK_BLUE)
+    corner.alignment = Alignment(horizontal="center", vertical="center")
+
+    for m_i, metric in enumerate(METRICS):
+        col_start = 2 + m_i * n_ctrl
+        col_end   = col_start + n_ctrl - 1
+        ws.merge_cells(start_row=2, start_column=col_start, end_row=2, end_column=col_end)
+        cell = ws.cell(row=2, column=col_start, value=metric)
+        cell.font      = Font(bold=True, color=WHITE, name="Arial", size=11)
+        cell.fill      = PatternFill("solid", fgColor=METRIC_COLORS.get(metric, MID_BLUE))
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Row 3: controller sub-headers
+    ws.row_dimensions[3].height = 18
+    ws.cell(row=3, column=1).fill = PatternFill("solid", fgColor=DARK_BLUE)
+    for m_i in range(n_met):
+        for c_i, ctrl in enumerate(controllers):
+            col  = 2 + m_i * n_ctrl + c_i
+            cell = ws.cell(row=3, column=col, value=ctrl)
+            cell.font      = Font(bold=True, color=WHITE, name="Arial", size=10)
+            cell.fill      = PatternFill("solid", fgColor=MID_BLUE)
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # Data rows
+    for r_i, estimator in enumerate(table.index):
+        row      = 4 + r_i
+        row_fill = PatternFill("solid", fgColor=LIGHT_BLUE if r_i % 2 == 0 else WHITE)
+        ws.row_dimensions[row].height = 16
+
+        ec = ws.cell(row=row, column=1, value=estimator)
+        ec.font      = Font(bold=True, color=WHITE, name="Arial", size=10)
+        ec.fill      = PatternFill("solid", fgColor=DARK_BLUE)
+        ec.alignment = Alignment(horizontal="left", vertical="center", indent=1)
+
+        for m_i, metric in enumerate(METRICS):
+            for c_i, ctrl in enumerate(controllers):
+                col   = 2 + m_i * n_ctrl + c_i
+                value = table.loc[estimator, (metric, ctrl)]
+                cell  = ws.cell(row=row, column=col)
+                cell.fill      = row_fill
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.font      = Font(name="Arial", size=10)
+
+                if pd.isna(value) or value is None:
+                    cell.value = "—"
+                    cell.font  = Font(name="Arial", size=10, color="999999")
+                    continue
+
+                val = float(value)
+                if metric == "Sharpe":
+                    cell.value         = round(val, 3)
+                    cell.number_format = "0.000"
+                    if val >= 0.8:
+                        cell.font = Font(name="Arial", size=10, color="375623", bold=True)
+                    elif val < 0:
+                        cell.font = Font(name="Arial", size=10, color="C00000")
+                elif metric in ("Annual Vol", "Annual Return"):
+                    cell.value         = val
+                    cell.number_format = "0.00%"
+                    if metric == "Annual Return" and val < 0:
+                        cell.font = Font(name="Arial", size=10, color="C00000")
+                elif metric == "Max DD":
+                    cell.value         = val
+                    cell.number_format = "0.00%"
+                    if val < -0.20:
+                        cell.font = Font(name="Arial", size=10, color="C00000")
+                elif metric == "Ulcer Index":
+                    cell.value         = round(val, 4)
+                    cell.number_format = "0.0000"
+
+        for m_i in range(n_met - 1):
+            sep_col = 2 + (m_i + 1) * n_ctrl - 1
+            ws.cell(row=row, column=sep_col).border = _border(right=_side("medium"))
+
+    thick = _side("medium")
+    for col in range(1, 2 + n_met * n_ctrl):
+        ws.cell(row=3, column=col).border         = _border(bottom=thick)
+        ws.cell(row=4 + n_est - 1, column=col).border = _border(bottom=thick)
+        ws.cell(row=2, column=col).border         = _border(top=thick)
+    for row in range(2, 4 + n_est):
+        ws.cell(row=row, column=1).border                    = _border(left=thick)
+        ws.cell(row=row, column=1 + n_met * n_ctrl).border  = _border(right=thick)
+
+    ws.freeze_panes = "B4"
+    wb.save(out_path)
+    print(f"✅  Excel saved : {out_path}")
+
+
+# ── PNG writer ────────────────────────────────────────────────────────────────
+
+def _fmt_value(value, metric: str) -> str:
+    """Format a cell value for display in the PNG table."""
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return "—"
+    val = float(value)
+    if metric == "Sharpe":
+        return f"{val:.3f}"
+    elif metric in ("Annual Vol", "Annual Return", "Max DD"):
+        return f"{val:.2%}"
+    elif metric == "Ulcer Index":
+        return f"{val:.4f}"
+    return str(value)
+
+
+def _cell_text_color(value, metric: str) -> str:
+    """Return red for bad values, green for good Sharpe, else black."""
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return "#999999"
+    val = float(value)
+    if metric == "Sharpe":
+        if val >= 0.8:
+            return "#1A5C1A"   # dark green
+        if val < 0:
+            return "#C00000"   # red
+    if metric == "Annual Return" and val < 0:
+        return "#C00000"
+    if metric == "Max DD" and val < -0.20:
+        return "#C00000"
+    return "#000000"
+
+
+def write_png(table: pd.DataFrame, controllers: list[str], out_path: Path):
+    n_ctrl = len(controllers)
+    n_met  = len(METRICS)
+    n_est  = len(table.index)
+
+    # Total columns: 1 (estimator) + n_met * n_ctrl
+    total_cols = 1 + n_met * n_ctrl
+
+    # Figure sizing
+    col_w   = 1.6   # inches per data column
+    est_w   = 1.8   # inches for estimator column
+    row_h   = 0.38  # inches per row
+    n_rows  = 3 + n_est  # title + metric header + ctrl header + data
+
+    fig_w = est_w + n_met * n_ctrl * col_w
+    fig_h = n_rows * row_h + 0.4   # small padding
+
+    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+    ax.set_xlim(0, fig_w)
+    ax.set_ylim(0, fig_h)
+    ax.axis("off")
+    fig.patch.set_facecolor("white")
+
+    # Helper: column x-positions
+    col_x = [0]  # left edge of each column
+    col_x.append(est_w)
+    for _ in range(n_met * n_ctrl):
+        col_x.append(col_x[-1] + col_w)
+    col_x = col_x[:-1]  # trim extra
+
+    col_widths = [est_w] + [col_w] * (n_met * n_ctrl)
+
+    # Row y-positions (top-down)
+    row_y = [fig_h - 0.2]  # title row top
+    for i in range(n_rows):
+        row_y.append(row_y[-1] - row_h)
+
+    def draw_cell(row_idx, col_idx, text, bg_hex, text_color="#FFFFFF",
+                  bold=False, fontsize=9, ha="center", colspan=1):
+        x     = col_x[col_idx]
+        y     = row_y[row_idx + 1]
+        w     = sum(col_widths[col_idx:col_idx + colspan])
+        h     = row_h
+        rect  = mpatches.FancyBboxPatch(
+            (x, y), w, h,
+            boxstyle="square,pad=0",
+            linewidth=0.5,
+            edgecolor="#CCCCCC",
+            facecolor=_hex(bg_hex),
+        )
+        ax.add_patch(rect)
+        ax.text(
+            x + w / 2 if ha == "center" else x + 0.08,
+            y + h / 2,
+            text,
+            ha=ha, va="center",
+            fontsize=fontsize,
+            fontweight="bold" if bold else "normal",
+            color=text_color,
+            clip_on=True,
+        )
+
+    # ── Row 0: Title ──────────────────────────────────────────────────────────
+    draw_cell(0, 0, "Controller Comparison — Key Performance Metrics",
+              DARK_BLUE, bold=True, fontsize=11, colspan=total_cols)
+
+    # ── Row 1: Metric group headers ───────────────────────────────────────────
+    draw_cell(1, 0, "Estimator", DARK_BLUE, bold=True, fontsize=9)
+    for m_i, metric in enumerate(METRICS):
+        draw_cell(1, 1 + m_i * n_ctrl, metric,
+                  METRIC_COLORS.get(metric, MID_BLUE),
+                  bold=True, fontsize=9, colspan=n_ctrl)
+
+    # ── Row 2: Controller sub-headers ─────────────────────────────────────────
+    draw_cell(2, 0, "", DARK_BLUE)
+    for m_i in range(n_met):
+        for c_i, ctrl in enumerate(controllers):
+            draw_cell(2, 1 + m_i * n_ctrl + c_i, ctrl,
+                      MID_BLUE, bold=True, fontsize=8)
+
+    # ── Rows 3+: Data ─────────────────────────────────────────────────────────
+    for r_i, estimator in enumerate(table.index):
+        row_bg = LIGHT_BLUE if r_i % 2 == 0 else WHITE
+        draw_cell(3 + r_i, 0, estimator, DARK_BLUE,
+                  bold=True, fontsize=9, ha="left")
+
+        for m_i, metric in enumerate(METRICS):
+            for c_i, ctrl in enumerate(controllers):
+                value    = table.loc[estimator, (metric, ctrl)]
+                txt      = _fmt_value(value, metric)
+                txt_col  = _cell_text_color(value, metric)
+                bold_val = (metric == "Sharpe" and value is not None
+                            and not (isinstance(value, float) and np.isnan(value))
+                            and float(value) >= 0.8)
+                draw_cell(3 + r_i, 1 + m_i * n_ctrl + c_i,
+                          txt, row_bg, text_color=txt_col,
+                          bold=bold_val, fontsize=8.5)
+
+    # Vertical separator lines between metric groups
+    for m_i in range(1, n_met):
+        sep_x = col_x[1 + m_i * n_ctrl]
+        ax.plot([sep_x, sep_x],
+                [row_y[n_rows], row_y[1]],
+                color="#555555", linewidth=1.2, zorder=5)
+
+    # Outer border
+    outer = mpatches.FancyBboxPatch(
+        (0, row_y[n_rows]), fig_w, fig_h - 0.2 - row_y[n_rows],
+        boxstyle="square,pad=0",
+        linewidth=1.5,
+        edgecolor="#1F3864",
+        facecolor="none",
+        zorder=10,
+    )
+    ax.add_patch(outer)
+
+    plt.tight_layout(pad=0)
+    fig.savefig(out_path, dpi=200, bbox_inches="tight",
+                facecolor="white", edgecolor="none")
+    plt.close(fig)
+    print(f"✅  PNG saved   : {out_path}")
+
+
+# ── main ──────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("📊  Building controller comparison table...")
+
+    table, controllers = build_data_table()
+
+    print(f"\n  Estimators found : {list(table.index)}")
+    print(f"  Controllers found: {controllers}")
+    print(f"  Metrics          : {METRICS}\n")
+
+    results_dir = Env.path("results")
+
+    write_excel(table, controllers, results_dir / "controller_comparison.xlsx")
+    write_png(  table, controllers, results_dir / "controller_comparison.png")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\run_backtests.py`
+**text** -
+
+```py
+"""Run volatility targeting strategies."""
+
+import argparse
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
+import yaml
+
+from src.env import Env
+from src.backtest import VolTargetEngine
+
+
+def load_config(config_path):
+    """
+    Load a yaml strategy config.
+    Accepts:
+      - Path object (full path)
+      - string full path: "configs/strategies/x.yaml"
+      - filename only: "x.yaml" (will be searched under Env.path('strategies'))
+    Returns dict.
+    """
+    p = Path(config_path)
+
+   
+    if not p.exists():
+        p = Env.path("strategies") / p.name
+
+    if not p.exists():
+        raise FileNotFoundError(f"Config file not found: {Path(config_path)} (also tried {p})")
+
+    with open(p, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+
+    if cfg is None:
+        raise ValueError(f"YAML loaded as None (empty or invalid yaml): {p}")
+
+    return cfg
+
+
+def run_strategy(config_path):
+    """Run a single strategy from config file."""
+    cfg = load_config(config_path)
+    
+    print(f"\n{'='*50}")
+    print(f"Running strategy: {cfg['name']}")
+    print(f"{'='*50}")
+    
+    engine = VolTargetEngine.from_config(cfg)
+    engine.run()
+    engine.save()
+    engine.summary()
+    
+    return engine
+
+
+def run_all_strategies():
+    """Run all strategies in configs/strategies/."""
+    strategies_dir = Env.path("strategies")
+    if not strategies_dir.exists():
+        print("No strategies found in configs/strategies/")
+        return
+    
+    configs = list(strategies_dir.glob("*.yaml"))
+    print(f"Found {len(configs)} strategies")
+    
+    engines = {}
+    errors = []
+    for config_path in configs:
+        try:
+            engine = run_strategy(config_path)
+            if engine is not None:
+                engines[config_path.stem] = engine
+            else:
+                errors.append(config_path.stem)
+        except Exception as e:
+            print(f"Error running {config_path.name}: {e}")
+            errors.append(config_path.stem)
+    
+    if errors:
+        print(f"\n⚠️  {len(errors)} strategies failed due to missing data: {', '.join(errors)}")
+    
+    return engines
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Run volatility targeting strategies")
+    parser.add_argument(
+        "--strategy", "-s",
+        help="Path to strategy config file (runs all if not specified)"
+    )
+    args = parser.parse_args()
+    
+    if args.strategy:
+        run_strategy(args.strategy)
+    else:
+        run_all_strategies()
+    
+    print("\n" + "="*50)
+    print("Done! Check results/ folder and run the analysis notebook.")
+    print("="*50)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\run_friction_tests.py`
+**text** -
+
+```py
+import sys
+import yaml
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# Ensure src can be imported
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.env import Env
+from src.backtest import VolTargetEngine
+
+def run_friction_sensitivity():
+    results_dir = Env.path("results")
+    strategies_dir = Env.path("strategies")
+    configs = list(strategies_dir.glob("*.yaml"))
+    
+    # Cost tiers to test (0 to 15 basis points)
+    cost_tiers = [0.0, 2.0, 5.0, 10.0, 15.0]
+    
+    sensitivity_data = {}
+
+    print("🚀 Starting Transaction Cost Sensitivity Test...")
+    
+    for config_path in configs:
+        with open(config_path, "r", encoding="utf-8") as f:
+            base_cfg = yaml.safe_load(f)
+            
+        strat_name = base_cfg['name']
+        print(f"  ▶ Testing {strat_name}...")
+        
+        sharpes = []
+        for cost in cost_tiers:
+            # Dynamically override the cost parameter
+            test_cfg = base_cfg.copy()
+            test_cfg['cost_bps'] = cost
+            
+            # Run the engine
+            engine = VolTargetEngine.from_config(test_cfg)
+            res = engine.run(mode="all")
+            
+            # Calculate Sharpe
+            rets = res['returns'].fillna(0)
+            ann_ret = rets.mean() * 252
+            ann_vol = rets.std() * np.sqrt(252)
+            sharpe = ann_ret / ann_vol if ann_vol > 0 else 0
+            
+            sharpes.append(sharpe)
+            
+        sensitivity_data[strat_name] = sharpes
+
+    # --- Plotting the Results ---
+    plt.style.use('seaborn-v0_8-darkgrid')
+    fig, ax = plt.subplots(figsize=(12, 7))
+    
+    markers = ['o', 's', '^', 'D', 'v', 'p', '*']
+    for i, (strat_name, sharpes) in enumerate(sensitivity_data.items()):
+        ax.plot(cost_tiers, sharpes, marker=markers[i % len(markers)], linewidth=2, label=strat_name)
+
+    ax.set_title("Robustness Check: Transaction Cost Sensitivity", fontsize=15, fontweight='bold')
+    ax.set_xlabel("Transaction Costs (Basis Points)", fontsize=12)
+    ax.set_ylabel("Annualized Sharpe Ratio", fontsize=12)
+    ax.legend(title="Strategy Models", bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    plt.tight_layout()
+    save_path = results_dir / "6_Friction_Sensitivity.png"
+    plt.savefig(save_path, dpi=300)
+    print(f"\n✅ Success! Friction test saved to: {save_path}")
+
+if __name__ == "__main__":
+    run_friction_sensitivity()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\run_importers.py`
+**text** -
+
+```py
+import sys
+from pathlib import Path
+
+root_path = Path(__file__).resolve().parents[1]
+if str(root_path) not in sys.path:
+    sys.path.insert(0, str(root_path))
+
+from src.data.importers.strategy_data_builder import DataBentoImporter
+from src.env import Env
+
+
+def run_mirror_import():
+    print("From CSV >> Parquet ")
+
+    importer = DataBentoImporter()
+    source = "databento"
+
+    out_dir = Env.path("prices", source)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        df = importer.fetch_all_as_mirror()
+
+        save_path = out_dir / "prices.parquet"
+        df.to_parquet(save_path)
+
+        print(f"\n ✅Successfully imported {save_path}")
+        print(f" Scale: {len(df)}  row")
+        print(f" Head: {list(df.columns)}")
+
+    except Exception as e:
+        print(f"\n Fail to Transfer from Csv to Parquet: {e}")
+
+
+if __name__ == "__main__":
+    run_mirror_import()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\run_processors.py`
+**text** -
+
+```py
+import sys
+import os
+from pathlib import Path
+import os
+import sys
+from pathlib import Path
+
+root_path = Path(__file__).resolve().parents[1]
+if str(root_path) not in sys.path:
+    sys.path.insert(0, str(root_path))
+
+from src.data.processors.data_lab_2 import DataLab2
+from src.data.processors.data_lab_3 import DataLab3
+
+def main():
+    print("🛠️ JPM Strategy Pipeline Automation Scheduler Starting...")
+
+    pipeline = [
+        {
+            "name": "Basic Cleaning & Resampling",
+            "lab_class": DataLab2,
+            "target_file": "ES_Daily_Raw.parquet",
+            "action": "run_comprehensive_cleaning"
+        },
+        {
+            "name": "Continuous Contract & Back-Adjustment",
+            "lab_class": DataLab3,
+            "target_file": "ES_Daily_Processed.parquet",
+            "action": "build_continuous_strategy_data"
+        },
+    ]
+
+    active_lab_class = pipeline[-1]["lab_class"]
+    handler = active_lab_class()
+
+    for step in pipeline:
+        file_path = f"{handler.processed_path}/{step['target_file']}"
+
+        print(f"\n▶️ Checking Stage: {step['name']}")
+
+        if os.path.exists(file_path):
+            print(f"✅ Cache Hit: {step['target_file']} exists, skipping.")
+        else:
+            print(f"🚧 Cache Miss: Executing {step['action']}...")
+            func = getattr(handler, step['action'])
+            func()
+            print(f"✨ Stage Complete: {step['target_file']} generated.")
+
+    print("\n" + "=" * 40)
+    print("🎉 Success! All pipeline stages are up to date.")
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\scripts\tune_strategy.py`
+**text** -
+
+```py
+import sys
+import yaml
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+
+sys.path.insert(0, str(Path(__file__).parents[1]))
+
+from src.backtest import VolTargetEngine
+from src.env import Env
+
+
+def grid_search_lookback(config_path, lookback_list):
+    # 路径设置：确保图片存入 results 文件夹
+    root_dir = Path(__file__).parents[1]
+    results_dir = root_dir / "results"
+    results_dir.mkdir(exist_ok=True)  # 如果没有 results 文件夹则创建一个
+
+    with open(config_path) as f:
+        base_cfg = yaml.safe_load(f)
+
+    results = []
+    equity_curves = {}
+
+    print(f"\n🔍 Starting Grid Search: {base_cfg['name']}")
+    print(f"📅 Mode: In-Sample Optimization")
+    print("-" * 60)
+
+    for lb in lookback_list:
+        test_cfg = base_cfg.copy()
+        test_cfg['estimator']['params']['lookback'] = lb
+
+        engine = VolTargetEngine.from_config(test_cfg)
+        result_df = engine.run(mode="in_sample")
+
+        rets = result_df['returns'].fillna(0)
+        sharpe = (rets.mean() * 252) / (rets.std() * np.sqrt(252)) if rets.std() > 0 else 0
+
+        results.append({'lookback': lb, 'sharpe': sharpe})
+        equity_curves[lb] = result_df['equity_curve']
+
+        print(f"Lookback: {lb:3d} | Sharpe: {sharpe:.4f} | Final Equity: {result_df['equity_curve'].iloc[-1]:.2f}")
+
+    best_res = max(results, key=lambda x: x['sharpe'])
+    best_lb = best_res['lookback']
+
+    print("-" * 60)
+    print(f"🏆 Best Found: {best_lb} days | 🚀 Running Out-of-Sample Validation...")
+
+    # 样本外验证
+    final_cfg = base_cfg.copy()
+    final_cfg['estimator']['params']['lookback'] = best_lb
+    final_engine = VolTargetEngine.from_config(final_cfg)
+    oos_result = final_engine.run(mode="out_of_sample")
+
+    # 绘图并保存到 results 文件夹
+    output_img_path = results_dir / f"optimization_{base_cfg['name']}.png"
+    plot_results(results, equity_curves, oos_result, best_lb, output_img_path)
+
+    final_engine.summary()
+
+
+def plot_results(results, equity_curves, oos_result, best_lb, save_path):
+    plt.style.use('seaborn-v0_8-darkgrid')
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+
+    # 图 1: 参数敏感度 (Parameter Sensitivity)
+    lbs = [r['lookback'] for r in results]
+    sharpes = [r['sharpe'] for r in results]
+    ax1.plot(lbs, sharpes, marker='o', color='#2c3e50', linewidth=2, label='IS Sharpe Ratio')
+    ax1.axvline(x=best_lb, color='#e74c3c', linestyle='--', label=f'Optimal: {best_lb}d')
+    ax1.set_title('Step 1: Parameter Sensitivity Analysis', fontsize=14, fontweight='bold')
+    ax1.set_xlabel('Lookback Window (Days)')
+    ax1.set_ylabel('Sharpe Ratio')
+    ax1.legend()
+
+    # 图 2: IS vs OOS 净值 (Walk-forward Analysis)
+    ax2.plot(equity_curves[best_lb], label='In-Sample (Train)', color='#3498db', alpha=0.6)
+    ax2.plot(oos_result['equity_curve'], label='Out-of-Sample (Test)', color='#27ae60', linewidth=2.5)
+    ax2.set_title('Step 2: Walk-forward Validation (IS vs OOS)', fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Date')
+    ax2.set_ylabel('Portfolio Value')
+    ax2.legend()
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300)
+    print(f"\n📊 Professional report saved to: {save_path}")
+
+
+if __name__ == "__main__":
+    root_dir = Path(__file__).parents[1]
+    config_file = root_dir / "configs" / "strategies" / "realized_vol_20d.yaml"
+    test_range = [10, 22, 44, 66, 125, 252]  # 增加了更长周期的测试
+
+    if config_file.exists():
+        grid_search_lookback(str(config_file), test_range)
+    else:
+        print(f"❌ File not found: {config_file}")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\env.py`
+**text** -
+
+```py
+"""Central environment configuration."""
+
+from pathlib import Path
+
+
+ROOT = Path(__file__).parents[1]
+
+PATHS = {
+    "root": ROOT,
+    "raw": ROOT / "data" / "raw",
+    "processed": ROOT / "data" / "processed",
+    "prices": ROOT / "data" / "raw" / "prices",
+    "features": ROOT / "data" / "processed" / "features",
+    "cache": ROOT / "data" / "cache",
+    "results": ROOT / "results",
+    "strategies": ROOT / "configs" / "strategies",
+}
+
+
+class Env:
+    """Central environment manager."""
+    
+    @classmethod
+    def path(cls, key, source=None):
+        """Fetch path by key, optionally with source subdirectory."""
+        p = PATHS[key]
+        return p / source if source else p
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\__init__.py`
+**text** -
+
+```py
+"""Volatility targeting framework."""
+
+from src.estimators import Estimator, RealizedVol, EWMA
+from src.controllers import NaiveScaling
+
+__all__ = [
+    "Estimator",
+    "RealizedVol",
+    "EWMA",
+    "NaiveScaling",
+]
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\backtest\base.py`
+**text** -
+
+```py
+"""Base engine class."""
+
+from abc import ABC, abstractmethod
+
+
+class Engine(ABC):
+    """Abstract base class for backtest engines."""
+    
+    @abstractmethod
+    def run(self, returns):
+        """Run the backtest and return a DataFrame."""
+        pass
+    
+    @abstractmethod
+    def save(self):
+        """Save results to disk."""
+        pass
+    
+    @abstractmethod
+    def summary(self):
+        """Print a summary of the results."""
+        pass
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\backtest\engine.py`
+**text** -
+
+```py
+"""
+Volatility targeting backtest engine (PURE ROLLING).
+
+Pure rolling rule:
+- If roll_window = W, the first volatility estimate is produced at index W (0-based),
+  using returns_clean[i-W : i] (exactly W observations, ending at i-1).
+- The returned result DataFrame is trimmed to dates[W:], so all columns align and
+  the result length is n - W.
+
+Notes:
+- If rebalance_freq is not daily, we still compute (and carry-forward) vol only on rebalance
+  dates, but we still output a full daily-aligned series over the trimmed sample.
+"""
+
+import importlib
+import numpy as np
+import pandas as pd
+from hmmlearn.hmm import GaussianHMM
+from src.env import Env
+from src.backtest.base import Engine
+
+
+def _load_class(class_path: str):
+    module_path, class_name = class_path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)
+
+
+def _get_rebalance_dates(dates: pd.DatetimeIndex, rebalance_freq: str) -> set:
+    if rebalance_freq is None:
+        rebalance_freq = "D"
+
+    rebalance_freq = str(rebalance_freq).upper()
+
+    if rebalance_freq in ("D", "DAILY", "1D"):
+        return set(dates)
+
+    schedule = pd.date_range(dates.min(), dates.max(), freq=rebalance_freq)
+    return set(dates.intersection(schedule))
+
+
+class VolTargetEngine(Engine):
+    def __init__(self, name, estimator, controller, config=None):
+        self.name = name
+        self.estimator = estimator
+        self.controller = controller
+        self.config = config or {}
+        self.result = None
+        self._data_cfg = self.config.get("data", {})
+
+    @classmethod
+    def from_config(cls, cfg: dict):
+        name = cfg["name"]
+        
+        est_cfg = cfg.get("estimator", {})
+        est_path = est_cfg["class"]
+        est_cls = _load_class(est_cfg["class"])
+        estimator = est_cls(est_cfg.get("params", {}))
+
+        ctrl_cfg = cfg.get("controller", {})
+        ctrl_cls = _load_class(ctrl_cfg["class"])
+        controller = ctrl_cls(ctrl_cfg.get("params", {}))
+
+        return cls(name, estimator, controller, cfg)
+
+    def _load_local_data(self) -> pd.DataFrame:
+        data_path = self._data_cfg.get("path")
+        if data_path is None:
+            data_path = Env.path("processed") / "ES_Daily_Processed.parquet"
+        else:
+            data_path = Env.path(data_path) if not str(data_path).endswith(".parquet") else data_path
+
+        if not pd.io.common.file_exists(str(data_path)):
+            raise FileNotFoundError(
+                f"Processed data file not found: {data_path}. Please run DataLab first "
+                f"or set config['data']['path']."
+            )
+
+        df = pd.read_parquet(data_path)
+        df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
+
+        required = ["returns", "returns_clean"]
+        missing = [c for c in required if c not in df.columns]
+        if missing:
+            raise ValueError(f"Missing required columns in processed parquet: {missing}")
+
+        return df
+
+    def _slice_mode(self, df: pd.DataFrame, mode: str) -> pd.DataFrame:
+        mode = str(mode).lower()
+        if mode not in ("all", "in_sample", "out_of_sample"):
+            raise ValueError("mode must be one of: 'all', 'in_sample', 'out_of_sample'")
+
+        if mode == "all":
+            return df.copy()
+
+        split_idx = int(len(df) * 0.5)
+        if mode == "in_sample":
+            return df.iloc[:split_idx].copy()
+        else:
+            return df.iloc[split_idx:].copy()
+
+    def _rolling_vol_series_pure(
+        self,
+        dates: pd.DatetimeIndex,
+        returns_clean: pd.Series,
+        window: int,
+        rebal_dates: set | None = None,
+    ) -> pd.Series:
+
+        n = len(dates)
+        if n <= window:
+            return pd.Series(dtype=float, name="vol_estimate")
+
+        has_estimate_window = hasattr(self.estimator, "estimate_window")
+
+        out_vals = np.full(n - window, np.nan, dtype=float)
+        out_idx = dates[window:]
+
+        last_vol = np.nan
+
+        # --- Engine diagnostics (works for all estimators) ---
+        self._engine_diag = {
+            "estimate_exception": 0,
+            "estimate_exception_ts": [],
+            "estimate_invalid": 0,          # nan / <=0 / inf
+            "estimate_invalid_ts": [],
+        }
+
+        for i in range(window, n):
+            t = dates[i]
+            j = i - window
+
+            if rebal_dates is not None and t not in rebal_dates:
+                out_vals[j] = last_vol
+                continue
+
+            w = returns_clean.iloc[i - window : i].dropna()
+
+            if len(w) == 0:
+                v = np.nan
+            else:
+                try:
+                    if has_estimate_window:
+                        v = float(self.estimator.estimate_window(w))
+                    else:
+                        v = float(self.estimator.estimate(t, w))
+                except Exception:
+                    v = np.nan
+                    self._engine_diag["estimate_exception"] += 1
+                    self._engine_diag["estimate_exception_ts"].append(pd.Timestamp(t))
+
+            # invalid forecast tracking (nan/inf/<=0)
+            if (not np.isfinite(v)) or (v <= 0):
+                self._engine_diag["estimate_invalid"] += 1
+                self._engine_diag["estimate_invalid_ts"].append(pd.Timestamp(t))
+
+            out_vals[j] = v
+            last_vol = v
+
+        return pd.Series(out_vals, index=out_idx, name="vol_estimate")
+
+    def run(self, mode: str = "all"):
+        df = self._load_local_data()
+        df = self._slice_mode(df, mode)
+
+        cfg = self.config
+        target_vol = float(cfg.get("target_vol", 0.10))
+        cost_bps = float(cfg.get("cost_bps", 5.0))
+        w_min = float(cfg.get("weight_min", 0.0))
+        w_max = float(cfg.get("weight_max", 1.5))
+        initial_capital = float(cfg.get("initial_capital", 1000.0))
+
+        rebalance_freq = cfg.get("rebalance_freq", "D")
+        roll_window = int(cfg.get("roll_window", 252))
+
+        dates_full = df.index
+        returns_clean_full = df["returns_clean"].astype(float)
+
+        rebal_dates = _get_rebalance_dates(dates_full, rebalance_freq)
+
+
+        vol_series = self._rolling_vol_series_pure(
+            dates=dates_full,
+            returns_clean=returns_clean_full,
+            window=roll_window,
+            rebal_dates=rebal_dates,
+        )
+
+
+        df = df.loc[vol_series.index].copy()
+        dates = df.index
+        returns_raw = df["returns"].astype(float)
+        returns_clean = df["returns_clean"].astype(float)
+
+        vol_estimates = vol_series.values
+        n = len(df)
+
+ 
+        rebal_dates_trim = _get_rebalance_dates(dates, rebalance_freq)
+
+        weights = np.zeros(n, dtype=float)
+        strat_log_returns = np.zeros(n, dtype=float)
+        prev_weight = 0.0
+
+        equity = initial_capital
+
+        for i, t in enumerate(dates[:-1]):
+            vol_est = float(vol_estimates[i]) if i < len(vol_estimates) else np.nan
+            ret_t = float(returns_clean.iloc[i])  
+            self.controller.update(vol_estimate=vol_est, ret=ret_t, equity=equity)
+
+            if t in rebal_dates_trim:
+                weight = self.controller.compute_weight(target_vol, vol_est, prev_weight)
+                weight = max(w_min, min(w_max, float(weight)))
+            else:
+                weight = prev_weight
+
+            weights[i] = weight
+
+            turnover = abs(weight - prev_weight)
+            cost = turnover * (cost_bps / 10000.0)
+
+            
+            strat_log_returns[i + 1] = weight * float(returns_raw.iloc[i + 1]) - cost
+            prev_weight = weight
+
+           
+            equity *= float(np.exp(strat_log_returns[i + 1]))
+
+        weights[-1] = prev_weight
+
+
+        equity_curve = initial_capital * np.exp(np.cumsum(strat_log_returns))
+
+        self.result = pd.DataFrame(
+            {
+                "returns": strat_log_returns,
+                "equity_curve": equity_curve,
+                "weight": weights,
+                "vol_estimate": vol_estimates,
+                "asset_returns": returns_raw.values,
+                "asset_returns_clean": returns_clean.values,
+            },
+            index=dates,
+        )
+        self.result.index.name = "date"
+
+
+        try:
+
+            vol = self.result["vol_estimate"].astype(float)
+
+            mask = np.isfinite(vol.values) & (vol.values > 0)
+            log_vol = np.log(vol.loc[mask]).values.reshape(-1, 1)
+            
+            model = GaussianHMM(
+                n_components=3,
+                covariance_type="diag",
+                n_iter=1000,
+                random_state=42,
+                init_params="mc",  
+                params="stmc",        
+            )
+
+            model.startprob_ = np.array([0.33, 0.33, 0.34])
+            model.transmat_ = np.array([
+                [0.96, 0.03, 0.01],
+                [0.03, 0.94, 0.03],
+                [0.01, 0.03, 0.96],
+            ])
+            model.fit(log_vol)
+            p_diag = np.diag(model.transmat_)
+            p_diag = np.diag(model.transmat_)
+            expected_duration = 1 / (1 - p_diag)
+            print("durtion",expected_duration)
+
+            states = model.predict(log_vol)  
+
+
+            state_means = model.means_.reshape(-1) 
+            order = np.argsort(state_means)     
+            ordered_labels = np.array(["low", "middle", "high"])
+            state_to_label = {int(order[k]): ordered_labels[k] for k in range(3)}
+            regime_state = pd.Series(np.nan, index=self.result.index, dtype="float")
+            regime_label = pd.Series(pd.NA, index=self.result.index, dtype="object")
+
+            regime_state.loc[mask] = states
+            regime_label.loc[mask] = pd.Series(states).map(state_to_label).values
+
+
+            self.result["vol_regime_state"] = regime_state
+            self.result["vol_regime"] = regime_label
+            print(self.result[["vol_estimate", "vol_regime_state", "vol_regime"]].dropna().head(10))
+            self._hmm_model = model
+            self._hmm_state_means = state_means
+
+        except Exception as e:
+
+            self.result["vol_regime_state"] = np.nan
+            self.result["vol_regime"] = pd.NA
+            print(f"[HMM] regime labeling failed")
+
+
+        # ---- Print diagnostics ----
+
+        
+        ed = getattr(self, "_engine_diag", None)
+        if ed is not None:
+            print(f"estimate exceptions: {ed['estimate_exception']}")
+            if ed["estimate_exception_ts"]:
+                print("  timestamps (exceptions):")
+                print("   ", ", ".join(str(x) for x in ed["estimate_exception_ts"][:50]))
+                if len(ed["estimate_exception_ts"]) > 50:
+                    print(f"   ... (+{len(ed['estimate_exception_ts']) - 50} more)")
+
+            print(f"invalid vol outputs : {ed['estimate_invalid']}")
+            if ed["estimate_invalid_ts"]:
+                print("  timestamps (invalid vols):")
+                print("   ", ", ".join(str(x) for x in ed["estimate_invalid_ts"][:50]))
+                if len(ed["estimate_invalid_ts"]) > 50:
+                    print(f"   ... (+{len(ed['estimate_invalid_ts']) - 50} more)")
+
+        
+        diag = getattr(self.estimator, "diag", None)
+        if isinstance(diag, dict):
+            fb_ewma = int(diag.get("fallback_ewma", 0))
+            fb_rv   = int(diag.get("fallback_rv", 0))
+            nc      = int(diag.get("non_converge", 0))
+
+            print(f"fallback (EWMA): {fb_ewma}")
+            if diag.get("fallback_ewma_ts"):
+                print("  timestamps :")
+                print("   ", ", ".join(str(x) for x in diag["fallback_ewma_ts"][:50]))
+                if len(diag["fallback_ewma_ts"]) > 50:
+                    print(f"   ... (+{len(diag['fallback_ewma_ts']) - 50} more)")
+
+            print(f"fallback (RV): {fb_rv}")
+            if diag.get("fallback_rv_ts"):
+                print("  timestamps (RV fallback):")
+                print("   ", ", ".join(str(x) for x in diag["fallback_rv_ts"][:50]))
+                if len(diag["fallback_rv_ts"]) > 50:
+                    print(f"   ... (+{len(diag['fallback_rv_ts']) - 50} more)")
+
+            print(f"non-converge / invalid params: {nc}")
+            if diag.get("non_converge_ts"):
+                print("  timestamps (non-converge):")
+                print("   ", ", ".join(str(x) for x in diag["non_converge_ts"][:50]))
+                if len(diag["non_converge_ts"]) > 50:
+                    print(f"   ... (+{len(diag['non_converge_ts']) - 50} more)")
+        else:
+            print("No .diag found — fallback/non-converge counts not available for this estimator.")
+        return self.result
+
+    def save(self):
+        if self.result is None:
+            raise ValueError("No results to save. Run the backtest first.")
+
+        path = Env.path("results") / f"{self.name}.parquet"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.result.to_parquet(path)
+        return path
+
+    def summary(self):
+        if self.result is None:
+            print("No results. Run the backtest first.")
+            return
+
+        r = self.result["returns"].fillna(0.0)
+        ann_ret = float(r.mean() * 252)
+        ann_vol = float(r.std(ddof=1) * np.sqrt(252))
+        sharpe = ann_ret / ann_vol if ann_vol > 0 else 0.0
+        total_return = float(self.result["equity_curve"].iloc[-1] / self.result["equity_curve"].iloc[0] - 1)
+
+        print(f"\n📊 Strategy Summary: {self.name}")
+        print(f"  Total Return:          {total_return:.2%}")
+        print(f"  Annualized Return:     {ann_ret:.2%}")
+        print(f"  Annualized Volatility: {ann_vol:.2%}")
+        print(f"  Sharpe Ratio:          {sharpe:.2f}")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\backtest\__init__.py`
+**text** -
+
+```py
+"""Backtest module."""
+
+from src.backtest.base import Engine
+from src.backtest.engine import VolTargetEngine
+
+__all__ = ["Engine", "VolTargetEngine"]
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\controllers\constant_weight.py`
+**text** -
+
+```py
+"""Constant weight controller for baseline."""
+
+
+class ConstantWeight:
+    """Always returns a fixed weight (default 1.0 for buy-and-hold)."""
+    
+    def __init__(self, params=None):
+        params = params or {}
+        self.weight = params.get("weight", 1.0)
+    
+    def compute_weight(self, target_vol, vol_estimate, prev_weight):
+        """Return constant weight."""
+        return self.weight
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\controllers\naive_scaling.py`
+**text** -
+
+```py
+"""Naive scaling controller."""
+
+import numpy as np
+
+
+class NaiveScaling:
+
+    def __init__(self, params=None):
+        self.no_trade_band = 0.05
+        self.eps_vol = 1e-8
+
+    def update(self, vol_estimate, **kwargs):
+        return
+    
+    def compute_weight(self, target_vol, vol_estimate, prev_weight):
+        if vol_estimate is None or not np.isfinite(vol_estimate) or vol_estimate <= 0:
+            return prev_weight
+        raw_weight = target_vol / max(vol_estimate, self.eps_vol)
+        if abs(raw_weight - prev_weight) < self.no_trade_band:
+            return prev_weight
+
+        return raw_weight
+
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\controllers\regime_controller.py`
+**text** -
+
+```py
+import numpy as np
+from collections import deque
+
+class RegimeSwitchController:
+
+    def __init__(self, params=None):
+        p = params or {}
+        self.no_trade_band = float(p.get("no_trade_band", 0.05))
+        self.eps_vol = float(p.get("eps_vol", 1e-8))
+
+        self.lookback = int(p.get("lookback", 252))
+        self.high_vol_q = float(p.get("high_vol_q", 0.8))  
+        self.mult_low = float(p.get("mult_low", 1.0))
+        self.mult_high = float(p.get("mult_high", 0.5))
+
+        self.w_min = float(p.get("w_min", 0.0))
+        self.w_max = float(p.get("w_max", 2.0))
+
+        self._vol_hist = deque(maxlen=self.lookback)
+
+    def update(self, vol_estimate, **kwargs):
+        if vol_estimate is not None and np.isfinite(vol_estimate) and vol_estimate > 0:
+            self._vol_hist.append(float(vol_estimate))
+
+    def _regime_multiplier(self, vol_estimate):
+        if len(self._vol_hist) < max(20, int(0.2 * self.lookback)):
+            return self.mult_low  
+
+        threshold = np.quantile(np.array(self._vol_hist), self.high_vol_q)
+        return self.mult_high if vol_estimate >= threshold else self.mult_low
+
+    def compute_weight(self, target_vol, vol_estimate, prev_weight):
+        if vol_estimate is None or not np.isfinite(vol_estimate) or vol_estimate <= 0:
+            return prev_weight
+
+        mult = self._regime_multiplier(float(vol_estimate))
+        raw = mult * (target_vol / max(float(vol_estimate), self.eps_vol))
+        raw = float(np.clip(raw, self.w_min, self.w_max))
+
+        if abs(raw - prev_weight) < self.no_trade_band:
+            return prev_weight
+        return raw
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\controllers\variance_scaling.py`
+**text** -
+
+```py
+"""
+Normalized Inverse Variance Scaling Controller
+================================================
+
+Implements the inverse variance (1/σ²) position sizing rule found in the
+volatility targeting literature, with a long-run normalization that anchors
+the average realized volatility to the target level.
+
+Derivation
+----------
+NaiveScaling uses:
+    weight = target_vol / σ
+    → realized vol ≈ weight × σ = target_vol  ✓  (exact by construction)
+
+A naive 1/σ² rule:
+    weight = target_vol / σ²
+    → realized vol ≈ weight × σ = target_vol / σ  ✗  (not anchored)
+
+To fix this, introduce a long-run average vol σ_bar as a normalizing constant:
+    weight = target_vol × σ_bar / σ²
+    → realized vol ≈ weight × σ = target_vol × σ_bar / σ
+
+When σ = σ_bar (normal regime):  realized vol = target_vol             ✓
+When σ > σ_bar (high vol):       realized vol < target_vol  (under-exposed, conservative)
+When σ < σ_bar (low vol):        realized vol > target_vol  (over-exposed, but capped)
+
+The realized vol is not guaranteed to equal target_vol on every single day —
+no vol-targeting strategy achieves that — but the TIME-AVERAGE realized vol
+converges to target_vol as long as σ_bar is estimated consistently.
+
+Why 1/σ² instead of 1/σ?
+--------------------------
+The 1/σ² rule produces a MORE NON-LINEAR response to vol forecasts:
+  σ doubles → naive weight halves, variance weight QUARTERS
+This means the strategy cuts positions much more aggressively during vol spikes
+(e.g. crisis periods like 2008, 2020), at the cost of running closer to
+weight_max during calm periods. Whether this improves Sharpe depends on whether
+the vol estimator accurately forecasts regime changes.
+
+σ_bar Estimation
+-----------------
+σ_bar is estimated as a rolling mean of the vol_estimate series over the past
+`sigma_bar_window` steps (default 252 — one year). On the first call before
+the window is full, we use the expanding mean as a warm-up. This makes σ_bar
+data-driven and avoids hard-coding an assumption about the asset's long-run vol.
+
+Usage in YAML
+-------------
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params:
+        sigma_bar_window: 252    # rolling window for σ_bar estimation
+        no_trade_band: 0.05      # same as NaiveScaling
+"""
+
+import numpy as np
+from collections import deque
+
+
+class VarianceScaling:
+    """
+    Normalized inverse-variance controller.
+
+        weight = target_vol × σ_bar / σ²
+
+    where σ_bar is a rolling mean of recent vol estimates.
+    Achieves target vol on average; cuts more aggressively than NaiveScaling
+    in high-vol regimes.
+
+    Parameters
+    ----------
+    sigma_bar_window : int
+        Rolling window (in trading days) used to estimate long-run average vol.
+        Default 252 (one year). Longer windows make σ_bar more stable but
+        slower to adapt to structural changes in asset vol.
+    no_trade_band : float
+        Minimum weight change to trigger rebalance. Default 0.05 (same as
+        NaiveScaling) — suppresses excessive turnover from small vol moves.
+    eps_vol : float
+        Variance floor to prevent division by zero. Default 1e-8.
+    """
+
+    def __init__(self, params=None):
+        params = params or {}
+        self.sigma_bar_window = int(params.get("sigma_bar_window", 252))
+        self.no_trade_band    = float(params.get("no_trade_band", 0.05))
+        self.eps_vol          = float(params.get("eps_vol", 1e-8))
+
+        # Rolling buffer of recent vol estimates — used to compute σ_bar
+        self._vol_history = deque(maxlen=self.sigma_bar_window)
+
+    def compute_weight(
+        self,
+        target_vol: float,
+        vol_estimate: float,
+        prev_weight: float,
+    ) -> float:
+        """
+        Compute target weight using normalized inverse variance scaling.
+
+        Parameters
+        ----------
+        target_vol   : annualised target vol (e.g. 0.10)
+        vol_estimate : annualised vol forecast from the estimator (σ, not σ²)
+        prev_weight  : weight from the previous period
+
+        Returns
+        -------
+        float : new target weight (before min/max clipping by the engine)
+        """
+        # Invalid vol estimate → hold previous weight
+        if vol_estimate is None or not np.isfinite(vol_estimate) or vol_estimate <= 0:
+            return prev_weight
+
+        # Update rolling history for σ_bar
+        self._vol_history.append(vol_estimate)
+
+        # σ_bar: rolling mean of recent vol estimates (expanding during warm-up)
+        sigma_bar = float(np.mean(self._vol_history))
+
+        # Safety: if σ_bar is somehow invalid, fall back to current estimate
+        if not np.isfinite(sigma_bar) or sigma_bar <= 0:
+            sigma_bar = vol_estimate
+
+        # σ² with variance floor
+        variance_estimate = max(vol_estimate ** 2, self.eps_vol)
+
+        # Core formula: target_vol × σ_bar / σ²
+        # Derivation: ensures E[weight × σ] ≈ target_vol when σ ≈ σ_bar
+        raw_weight = (target_vol * sigma_bar) / variance_estimate
+
+        # No-trade band: suppress rebalance if change is negligible
+        if abs(raw_weight - prev_weight) < self.no_trade_band:
+            return prev_weight
+
+        return raw_weight
+    def update(self, *args, **kwargs) -> float:
+        """
+        Compatibility wrapper.
+
+        Supports common calling styles, e.g.
+          update(target_vol, vol_estimate, prev_weight)
+          update(env, target_vol, vol_estimate, prev_weight)
+          update(..., vol_estimate=<>, prev_weight=<>, target_vol=<>)
+
+        Returns the new (raw) weight. Engine will apply min/max clipping.
+        """
+        # Prefer keyword args if present
+        if "target_vol" in kwargs and "vol_estimate" in kwargs:
+            target_vol = float(kwargs["target_vol"])
+            vol_estimate = float(kwargs["vol_estimate"])
+            prev_weight = float(kwargs.get("prev_weight", kwargs.get("weight_prev", 0.0)))
+            return self.compute_weight(target_vol, vol_estimate, prev_weight)
+
+        # Otherwise parse positional args by taking the LAST three numeric-ish values
+        # as (target_vol, vol_estimate, prev_weight).
+        vals = []
+        for x in args:
+            # skip obvious non-numerics like env objects
+            if isinstance(x, (int, float, np.floating)) and np.isfinite(x):
+                vals.append(float(x))
+        if len(vals) >= 3:
+            target_vol, vol_estimate, prev_weight = vals[-3], vals[-2], vals[-1]
+            return self.compute_weight(target_vol, vol_estimate, prev_weight)
+
+        # If we can't infer, do a conservative fallback
+        return float(kwargs.get("prev_weight", 0.0))
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\controllers\__init__.py`
+**text** -
+
+```py
+"""Controllers module."""
+
+from src.controllers.naive_scaling import NaiveScaling
+from src.controllers.constant_weight import ConstantWeight
+
+__all__ = ["NaiveScaling", "ConstantWeight"]
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\cleancheck`
+**text** -
+
+```text
+# save as: export_winsor_report.py
+# run (from repo root):
+#   C:/Users/quebi/anaconda3/python.exe export_winsor_report.py
+# or:
+#   python export_winsor_report.py
+
+from __future__ import annotations
+
+from pathlib import Path
+import numpy as np
+import pandas as pd
+
+
+def main():
+    processed_path = Path("data/processed/ES_Daily_Processed.parquet")
+    out_path = Path("results") / "winsor_report.txt"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if not processed_path.exists():
+        raise FileNotFoundError(f"Processed parquet not found: {processed_path.resolve()}")
+
+    df = pd.read_parquet(processed_path)
+    if not isinstance(df.index, pd.DatetimeIndex):
+        df.index = pd.to_datetime(df.index, errors="coerce")
+    df = df.sort_index()
+
+    required = {"returns", "returns_clean", "is_roll_day"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Missing required columns in parquet: {sorted(missing)}")
+
+    # Basic sanity
+    n_rows = len(df)
+    nan_returns = int(df["returns"].isna().sum())
+    nonfinite_returns = int((~np.isfinite(df["returns"])).sum())
+
+    # Winsor stats
+    extreme_mask = df["returns"] != df["returns_clean"]
+    n_extreme = int(extreme_mask.sum())
+    pct_extreme = (n_extreme / n_rows * 100.0) if n_rows else 0.0
+
+    # Implied winsor bounds (constant if quantile-based)
+    upper_bound = float(df["returns_clean"][extreme_mask & (df["returns"] > df["returns_clean"])].max()) if n_extreme else float("nan")
+    lower_bound = float(df["returns_clean"][extreme_mask & (df["returns"] < df["returns_clean"])].min()) if n_extreme else float("nan")
+
+    # Top extreme days by absolute return
+    extreme_df = df.loc[extreme_mask, ["returns", "returns_clean", "is_roll_day"]].copy()
+    extreme_df["abs_returns"] = extreme_df["returns"].abs()
+    extreme_df = extreme_df.sort_values("abs_returns", ascending=False)
+
+    # Helpful extra: distribution summaries
+    full_desc = df["returns"].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).to_string()
+    extreme_desc = df.loc[extreme_mask, "returns"].describe(percentiles=[0.01, 0.05, 0.5, 0.95, 0.99]).to_string()
+
+    # Build report text
+    lines: list[str] = []
+    lines.append("WINSORIZATION REPORT")
+    lines.append("=" * 80)
+    lines.append(f"Processed file: {processed_path.resolve()}")
+    lines.append(f"Rows: {n_rows:,}")
+    lines.append(f"Date range: {df.index.min().date()} -> {df.index.max().date()}")
+    lines.append("")
+    lines.append("SANITY CHECKS")
+    lines.append("-" * 80)
+    lines.append(f"NaN in returns: {nan_returns}")
+    lines.append(f"Non-finite in returns (inf/-inf): {nonfinite_returns}")
+    lines.append("")
+    lines.append("WINSOR SUMMARY")
+    lines.append("-" * 80)
+    lines.append(f"Extreme days adjusted (returns != returns_clean): {n_extreme} ({pct_extreme:.4f}%)")
+    if np.isfinite(lower_bound) and np.isfinite(upper_bound):
+        lines.append(f"Implied lower bound (clean): {lower_bound:.6f}  (~{lower_bound*100:.3f}%)")
+        lines.append(f"Implied upper bound (clean): {upper_bound:.6f}  (~{upper_bound*100:.3f}%)")
+    lines.append("")
+    lines.append("RETURNS DISTRIBUTION (FULL SAMPLE)")
+    lines.append("-" * 80)
+    lines.append(full_desc)
+    lines.append("")
+    lines.append("RETURNS DISTRIBUTION (EXTREME DAYS ONLY)")
+    lines.append("-" * 80)
+    lines.append(extreme_desc)
+    lines.append("")
+
+    lines.append("EXTREME DAYS (TOP 50 BY |returns|)")
+    lines.append("-" * 80)
+    # format as a small table
+    top_n = 50
+    show = extreme_df.head(top_n).copy()
+    show.index.name = "date"
+    show = show[["returns", "returns_clean", "is_roll_day", "abs_returns"]]
+    lines.append(show.to_string(float_format=lambda x: f"{x: .6f}"))
+    lines.append("")
+
+    lines.append("ALL EXTREME DATES (CHRONOLOGICAL)")
+    lines.append("-" * 80)
+    extreme_chrono = df.loc[extreme_mask, ["returns", "returns_clean"]].copy()
+    extreme_chrono.index.name = "date"
+    lines.append(extreme_chrono.to_string(float_format=lambda x: f"{x: .6f}"))
+    lines.append("")
+
+    out_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"✅ Report written to: {out_path.resolve()}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\__init__.py`
+**text** -
+
+```py
+import pandas as pd
+from pathlib import Path
+
+
+class DataInterface:
+    @staticmethod
+    def prices(symbol: str, source: str = "local_csv", start_date=None, end_date=None) -> pd.DataFrame:
+        """
+        Load prices for `symbol` and return a DataFrame indexed by date with a `close` column.
+        Expected CSV: data/raw/prices.csv with columns including:
+          - ts_event (or date/datetime/time)
+          - symbol (or ticker)
+          - close (or adj_close)
+        """
+        if source != "local_csv":
+            raise ValueError(f"Unknown data source: {source}")
+
+        path = Path("data/raw/prices.csv")
+        if not path.exists():
+            raise FileNotFoundError(f"CSV not found: {path.resolve()}")
+
+        df = pd.read_csv(path)
+
+        # map columns (case-insensitive)
+        lower_map = {c.lower(): c for c in df.columns}
+
+        ts_col = lower_map.get("ts_event") or lower_map.get("datetime") or lower_map.get("date") or lower_map.get("time")
+        sym_col = lower_map.get("symbol") or lower_map.get("ticker")
+        close_col = lower_map.get("close") or lower_map.get("adj_close") or lower_map.get("adj close")
+
+        if ts_col is None or sym_col is None or close_col is None:
+            raise ValueError(
+                "CSV must contain timestamp, symbol, close columns. "
+                f"Found columns: {list(df.columns)}"
+            )
+
+        df[ts_col] = pd.to_datetime(df[ts_col], errors="coerce")
+        df = df.dropna(subset=[ts_col])
+
+        df = df[df[sym_col] == symbol].copy()
+        if df.empty:
+            raise ValueError(f"No rows found for symbol='{symbol}' in {path}")
+
+        df = df.set_index(ts_col).sort_index()
+
+        # intraday -> daily close
+        daily = (
+            df[close_col]
+            .resample("1D")
+            .last()
+            .dropna()
+            .to_frame(name="close")
+        )
+
+        if start_date is not None:
+            daily = daily.loc[pd.to_datetime(start_date):]
+        if end_date is not None:
+            daily = daily.loc[:pd.to_datetime(end_date)]
+
+        return daily
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\ar1.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from src.estimators.base import Estimator
+
+
+class AR1(Estimator):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+
+        self._vol_series = None
+        self._fitted = False
+        self.alpha = None
+        self.beta = None
+
+
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+    def fit(self, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        sq = (r * r).dropna()
+        if len(sq) < 3:
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="ar1_vol")
+            self._fitted = True
+            self.alpha, self.beta = np.nan, np.nan
+            return self
+
+        y = sq.iloc[1:].values.reshape(-1, 1)
+        X = sq.iloc[:-1].values.reshape(-1, 1)
+
+        model = LinearRegression()
+        model.fit(X, y)
+
+        self.alpha = float(model.intercept_[0])
+        self.beta = float(model.coef_[0][0])
+
+        cond_var = self.alpha + self.beta * sq.shift(1)
+        cond_var = cond_var.clip(lower=1e-9)
+        vol = np.sqrt(cond_var * self.vol_ann)
+
+        self._vol_series = pd.Series(vol, index=sq.index, name="ar1_vol").ffill().bfill()
+        self._fitted = True
+        return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end = r.index[-1]
+        n = len(r)
+        if self._cache_end == end and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+     
+        self.fit(r)
+        v = np.nan
+        if self._vol_series is not None and len(self._vol_series) > 0:
+            v = float(self._vol_series.iloc[-1])
+
+        self._cache_end = end
+        self._cache_len = n
+        self._cache_vol = v
+        return v if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns=None):
+        if returns is not None:
+            r = pd.Series(returns).dropna()
+            if len(r) and r.index[-1] == t:
+                return self.estimate_window(r)
+
+        if self._vol_series is None:
+            if returns is None:
+                raise ValueError("AR1 model has not been fitted.")
+            self.fit(returns)
+
+        if t in self._vol_series.index:
+            return float(self._vol_series.loc[t])
+
+        v = self._vol_series.sort_index().asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\ar2.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from src.estimators.base import Estimator
+
+
+class AR2(Estimator):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+
+        self._vol_series = None
+        self._fitted = False
+        self.alpha = None
+        self.beta = None
+
+        # optional rolling cache
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+    def fit(self, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        sq = (r * r).dropna()
+        if len(sq) < 4:
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="ar2_vol")
+            self._fitted = True
+            self.alpha, self.beta1, self.beta2 = np.nan, np.nan, np.nan
+            return self
+
+        y = sq.iloc[2:].values.reshape(-1, 1)
+        X = np.column_stack([
+        sq.iloc[1:-1].values, # Lag 1
+        sq.iloc[:-2].values   # Lag 2
+        ])
+
+        model = LinearRegression()
+        model.fit(X, y)
+
+        self.alpha = float(model.intercept_[0])
+        self.beta1 = float(model.coef_[0][0])
+        self.beta2 = float(model.coef_[0][1])
+
+        cond_var = self.alpha + self.beta1 * sq.shift(1) + self.beta2 * sq.shift(2)
+        cond_var = cond_var.clip(lower=1e-9)
+        vol = np.sqrt(cond_var * self.vol_ann)
+
+        self._vol_series = pd.Series(vol, index=sq.index, name="ar2_vol").ffill().bfill()
+        self._fitted = True
+        return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end = r.index[-1]
+        n = len(r)
+        if self._cache_end == end and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        # Fit ONLY on this window, then return last vol
+        self.fit(r)
+        v = np.nan
+        if self._vol_series is not None and len(self._vol_series) > 0:
+            v = float(self._vol_series.iloc[-1])
+
+        self._cache_end = end
+        self._cache_len = n
+        self._cache_vol = v
+        return v if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns=None):
+        if returns is not None:
+            r = pd.Series(returns).dropna()
+            if len(r) and r.index[-1] == t:
+                return self.estimate_window(r)
+
+        if self._vol_series is None:
+            if returns is None:
+                raise ValueError("AR1 model has not been fitted.")
+            self.fit(returns)
+
+        if t in self._vol_series.index:
+            return float(self._vol_series.loc[t])
+
+        v = self._vol_series.sort_index().asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\base.py`
+**text** -
+
+```py
+"""Base class for volatility estimators."""
+
+
+class Estimator:
+    """Base class for volatility estimators."""
+    
+    def __init__(self, params=None):
+        self.params = params or {}
+        self._fitted = False
+    
+    def fit(self, returns):
+        """Fit the estimator on historical returns."""
+        raise NotImplementedError
+
+    def estimate(self, t, returns):
+        """Return estimated volatility (float) at time t."""
+        raise NotImplementedError
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\buy_and_hold.py`
+**text** -
+
+```py
+# src/estimators/buy_and_hold.py
+import pandas as pd
+from src.estimators.base import Estimator
+
+class BuyAndHold(Estimator):
+    """
+    Engine uses: weight = target_vol / vol_est
+    If we output vol_est = target_vol always -> weight == 1 always.
+    """
+
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.target_vol = float(self.params.get("target_vol", 0.10))
+
+    def fit(self, returns: pd.Series):
+        return self
+
+    def estimate(self, t, returns=None):
+        return self.target_vol
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\ewma.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+from src.estimators.buy_and_hold import Estimator
+
+
+class EWMA(Estimator):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.halflife = float(self.params.get("halflife", 20))
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+        self.decay_factor = float(np.exp(-np.log(2.0) / self.halflife))
+
+        self._fitted = False
+        self._ewma_series = None
+
+
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+    def fit(self, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        sq = r * r
+        ewm_var = sq.ewm(halflife=self.halflife, adjust=False).mean()
+        vol = np.sqrt(ewm_var * self.vol_ann)
+        self._ewma_series = pd.Series(vol, index=r.index, name="ewma_vol").ffill().bfill()
+        self._fitted = True
+        return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end = r.index[-1]
+        n = len(r)
+        if self._cache_end == end and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        self.fit(r)
+        v = float(self._ewma_series.iloc[-1]) if self._ewma_series is not None and len(self._ewma_series) else np.nan
+
+        self._cache_end = end
+        self._cache_len = n
+        self._cache_vol = v
+        return v if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns=None):
+
+        if returns is not None:
+            r = pd.Series(returns).dropna()
+            if len(r) and r.index[-1] == t:
+                return self.estimate_window(r)
+
+        if self._ewma_series is None:
+            if returns is None:
+                raise ValueError("EWMA not fitted and no returns provided.")
+            self.fit(returns)
+
+        if t in self._ewma_series.index:
+            return float(self._ewma_series.loc[t])
+
+        v = self._ewma_series.sort_index().asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\garch.py`
+**text** -
+
+```py
+"""GARCH volatility estimator (rolling-window compatible + stabilized) + diagnostics."""
+
+import numpy as np
+import pandas as pd
+from src.estimators.buy_and_hold import Estimator
+
+
+class GARCH(Estimator):
+    def __init__(self, params=None):
+        super().__init__(params)
+
+        self.p = int(self.params.get("p", 1))
+        self.q = int(self.params.get("q", 1))
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+        self.mean = self.params.get("mean", "Zero")
+        self.dist = self.params.get("dist", "normal")
+        self.scale = float(self.params.get("scale", 1000.0))
+        self.maxiter = int(self.params.get("maxiter", 2000))
+        self.min_obs = int(self.params.get("min_obs", 30))
+        self.fallback = str(self.params.get("fallback", "rv")).lower()
+
+        self._fitted = False
+        self._vol_series = None
+
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+        # -----------------------------
+        # Diagnostics (engine-friendly)
+        # -----------------------------
+        self.diag = {
+            "fallback_rv": 0,
+            "fallback_rv_ts": [],
+            "non_converge": 0,          # fit failed (exception) OR produced unusable result
+            "non_converge_ts": [],
+            "warmup_insufficient": 0,   # not enough obs to fit
+            "warmup_insufficient_ts": [],
+        }
+
+        # internal: set by fit(), used to decide whether to count non_converge
+        self._last_fit_failed = False
+
+    @staticmethod
+    def _rv_fallback(r: pd.Series, vol_ann: int) -> float:
+        r = pd.Series(r).dropna().astype(float)
+        if len(r) < 2:
+            return np.nan
+        return float(r.std(ddof=1) * np.sqrt(vol_ann))
+
+    def fit(self, returns):
+        """Fit GARCH(p,q) model and store conditional volatility."""
+        from arch import arch_model
+
+        r = pd.Series(returns).dropna().astype(float)
+        end_ts = pd.Timestamp(r.index[-1]) if len(r) else pd.NaT
+        self._last_fit_failed = False
+
+        # Not enough data to fit: mark warmup and return empty vol series
+        if len(r) < max(self.min_obs, max(self.p, self.q) + 2):
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="garch_vol")
+            self._fitted = True
+
+            self.diag["warmup_insufficient"] += 1
+            if pd.notna(end_ts):
+                self.diag["warmup_insufficient_ts"].append(end_ts)
+
+            return self
+
+        r_scaled = self.scale * r
+
+        try:
+            am = arch_model(
+                r_scaled,
+                mean=self.mean,
+                vol="GARCH",
+                p=self.p,
+                q=self.q,
+                dist=self.dist,
+                rescale=False,
+            )
+            res = am.fit(disp="off", options={"maxiter": self.maxiter})
+
+            # Conditional vol (daily) -> annualised
+            vol_daily_scaled = res.conditional_volatility
+            vol_daily = vol_daily_scaled / self.scale
+            vol_ann = vol_daily * np.sqrt(self.vol_ann)
+
+            # Store
+            self._vol_series = pd.Series(vol_ann, index=r.index, name="garch_vol")
+            self._fitted = True
+
+            # If the fitted vol is garbage at the end, treat as "non_converge/unusable"
+            v_end = float(self._vol_series.iloc[-1]) if len(self._vol_series) else np.nan
+            if (not np.isfinite(v_end)) or (v_end <= 0):
+                self._last_fit_failed = True
+                self.diag["non_converge"] += 1
+                if pd.notna(end_ts):
+                    self.diag["non_converge_ts"].append(end_ts)
+
+            return self
+
+        except Exception:
+            # Fit threw -> non-converge
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="garch_vol")
+            self._fitted = True
+            self._last_fit_failed = True
+
+            self.diag["non_converge"] += 1
+            if pd.notna(end_ts):
+                self.diag["non_converge_ts"].append(end_ts)
+
+            return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end_ts = pd.Timestamp(r.index[-1])
+        n = len(r)
+
+        if self._cache_end == end_ts and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        self.fit(r)
+
+        v = np.nan
+        if self._vol_series is not None and len(self._vol_series) > 0:
+            v = float(self._vol_series.iloc[-1])
+
+        # If vol invalid, apply fallback (if enabled)
+        if (not np.isfinite(v)) or (v <= 0):
+            if self.fallback == "rv":
+                v2 = self._rv_fallback(r, self.vol_ann)
+
+                # Count fallback usage ONLY if fallback produced a finite positive number
+                # (still count it as "fallback attempt" even if NaN? if you want, remove the if)
+                self.diag["fallback_rv"] += 1
+                self.diag["fallback_rv_ts"].append(end_ts)
+
+                v = v2
+            else:
+                v = np.nan
+
+        self._cache_end = end_ts
+        self._cache_len = n
+        self._cache_vol = v
+        return float(v) if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        if len(r.index) > 0 and r.index[-1] == t:
+            return self.estimate_window(r)
+
+        if (not self._fitted) or (self._vol_series is None):
+            self.fit(r)
+
+        if self._vol_series is None or len(self._vol_series) == 0:
+            return np.nan
+
+        if t in self._vol_series.index:
+            v = float(self._vol_series.loc[t])
+            return v if np.isfinite(v) else np.nan
+
+        s = self._vol_series.sort_index()
+        v = s.asof(t)
+        return float(v) if pd.notna(v) else np.nan
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\gjr_garch.py`
+**text** -
+
+```py
+"""
+GJR-GARCH Volatility Estimator (with diagnostics)
+"""
+
+import numpy as np
+import pandas as pd
+from arch import arch_model
+
+
+class GJRGARCH:
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], dict):
+            config = args[0]
+        else:
+            config = kwargs
+
+        self.lookback   = int(config.get("lookback", 252))
+        self.min_obs    = int(config.get("min_obs", 126))
+        self.vol_ann    = int(config.get("vol_ann", 252))
+        self.recal_freq = int(config.get("recal_freq", 63))
+        self.scale      = float(config.get("scale", 1000.0))
+        self.p          = int(config.get("p", 1))
+        self.q          = int(config.get("q", 1))
+        self.o          = int(config.get("o", 1))
+        self.dist       = str(config.get("dist", "normal"))
+        self.maxiter    = int(config.get("maxiter", 500))
+        self.ewma_hl    = float(config.get("ewma_hl", 21))
+
+        self._current_params = None
+        self._step_count     = 0
+        self._last_recal     = -self.recal_freq
+
+        self._cache_key = None
+        self._cache_vol = None
+
+        # -----------------------------
+        # Diagnostics (engine-friendly)
+        # -----------------------------
+        self.diag = {
+            "fallback_ewma": 0,
+            "fallback_rv": 0,
+            "non_converge": 0,
+            "warmup_insufficient": 0,
+
+            "fallback_ewma_ts": [],
+            "fallback_rv_ts": [],
+            "non_converge_ts": [],
+            "warmup_insufficient_ts": [],
+        }
+
+    # ------------------------------------------------------------------ #
+    # Public interface                                                    #
+    # ------------------------------------------------------------------ #
+
+    def fit(self, returns: pd.Series):
+        r = self._prep(returns)
+        if r is None or len(r) < self.min_obs:
+            return self
+
+        r_win  = r.iloc[-self.lookback:]
+        params = self._calibrate(r_win)  # _calibrate will log non_converge on failure
+        if params is not None:
+            self._current_params = params
+
+        return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = self._prep(window_returns)
+
+        # timestamp for this "decision point"
+        end_ts = pd.Timestamp(r.index[-1]) if (r is not None and len(r)) else pd.NaT
+
+        # Warm-up: EWMA
+        if r is None or len(r) < self.min_obs:
+            self.diag["warmup_insufficient"] += 1
+            if pd.notna(end_ts):
+                self.diag["warmup_insufficient_ts"].append(end_ts)
+
+            v = self._ewma_fallback(r)
+            self.diag["fallback_ewma"] += 1
+            if pd.notna(end_ts):
+                self.diag["fallback_ewma_ts"].append(end_ts)
+            return float(v) if np.isfinite(v) else np.nan
+
+        cache_key = (r.index[-1], len(r))
+        if cache_key == self._cache_key and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        self._step_count += 1
+
+        # Recalibration
+        steps_since_recal = self._step_count - self._last_recal
+        if self._current_params is None or steps_since_recal >= self.recal_freq:
+            r_win  = r.iloc[-self.lookback:]
+            params = self._calibrate(r_win)  # logs non_converge if both passes fail
+            if params is not None:
+                self._current_params = params
+                self._last_recal = self._step_count
+
+        # Forecast then fallback hierarchy
+        v = self._forecast(r)
+
+        if (not np.isfinite(v)) or (v <= 0):
+            v2 = self._ewma_fallback(r)
+            self.diag["fallback_ewma"] += 1
+            self.diag["fallback_ewma_ts"].append(end_ts)
+            v = v2
+
+        if (not np.isfinite(v)) or (v <= 0):
+            v2 = self._rv_fallback(r)
+            self.diag["fallback_rv"] += 1
+            self.diag["fallback_rv_ts"].append(end_ts)
+            v = v2
+
+        self._cache_key = cache_key
+        self._cache_vol = v
+        return float(v) if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns=None):
+        if returns is not None:
+            r = pd.Series(returns).dropna()
+            if len(r) and r.index[-1] == t:
+                return self.estimate_window(r)
+        return np.nan
+
+    # ------------------------------------------------------------------ #
+    # Private helpers                                                     #
+    # ------------------------------------------------------------------ #
+
+    def _prep(self, returns) -> pd.Series | None:
+        if returns is None:
+            return None
+        r = pd.Series(returns).dropna().astype(float)
+        return r if len(r) >= 2 else None
+
+    def _calibrate(self, r: pd.Series):
+        r_scaled = r * self.scale
+        end_ts = pd.Timestamp(r.index[-1]) if len(r) else pd.NaT
+
+        attempts = [
+            {"maxiter": self.maxiter,     "ftol": 1e-6},
+            {"maxiter": self.maxiter * 2, "ftol": 1e-4},
+        ]
+
+        any_exception = False
+
+        for opts in attempts:
+            try:
+                am = arch_model(
+                    r_scaled,
+                    vol="GARCH",
+                    p=self.p,
+                    o=self.o,
+                    q=self.q,
+                    dist=self.dist,
+                    mean="Zero",
+                    rescale=False,
+                )
+                res = am.fit(
+                    update_freq=0,
+                    disp="off",
+                    show_warning=False,
+                    options=opts,
+                )
+                if res.params is not None and np.all(np.isfinite(res.params)):
+                    return res.params
+            except Exception:
+                any_exception = True
+
+        # If we got here, both passes failed or params were invalid
+        self.diag["non_converge"] += 1
+        if pd.notna(end_ts):
+            self.diag["non_converge_ts"].append(end_ts)
+
+        return None
+
+    def _forecast(self, r: pd.Series) -> float:
+        if self._current_params is None:
+            return np.nan
+
+        r_win    = r.iloc[-self.lookback:]
+        r_scaled = r_win * self.scale
+
+        try:
+            am = arch_model(
+                r_scaled,
+                vol="GARCH",
+                p=self.p,
+                o=self.o,
+                q=self.q,
+                dist=self.dist,
+                mean="Zero",
+                rescale=False,
+            )
+            res_fixed = am.fix(self._current_params)
+            forecasts = res_fixed.forecast(horizon=1, reindex=False)
+
+            var_scaled = float(forecasts.variance["h.1"].iloc[-1])
+            if (not np.isfinite(var_scaled)) or (var_scaled < 0):
+                return np.nan
+
+            v_scaled = np.sqrt(var_scaled)
+            v = (v_scaled / self.scale) * np.sqrt(self.vol_ann)
+
+            return float(v) if (np.isfinite(v) and v > 0) else np.nan
+
+        except Exception:
+            return np.nan
+
+    def _ewma_fallback(self, r) -> float:
+        if r is None or len(r) < 2:
+            return np.nan
+        r_s = pd.Series(r).dropna().astype(float)
+        ewm = (r_s ** 2).ewm(halflife=self.ewma_hl, adjust=False).mean()
+        v = float(np.sqrt(ewm.iloc[-1] * self.vol_ann))
+        return v if (np.isfinite(v) and v > 0) else np.nan
+
+    def _rv_fallback(self, r) -> float:
+        if r is None or len(r) < 2:
+            return np.nan
+        return float(pd.Series(r).dropna().std(ddof=1) * np.sqrt(self.vol_ann))
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\har_rv.py`
+**text** -
+
+```py
+# src/estimators/har_rv.py
+"""HAR-RV volatility estimator compatible with engine calling estimate(t, w)."""
+
+import numpy as np
+import pandas as pd
+
+from src.estimators.base import Estimator
+
+
+class HARRV(Estimator):
+    """
+    HAR-RV style estimator on realized variance proxies.
+
+    Engine compatibility:
+      - Many engines call: estimate(t, w) -> float
+        where t is a Timestamp, and w is a rolling window of data.
+      - This class supports:
+          estimate(t, w)  (preferred in your engine)
+          estimate(df)    (fallback, returns Series)
+
+    What we do in estimate(t, w):
+      - Extract returns series from w (best-effort)
+      - Build RV features (rv_d, rv_w, rv_m) from r^2
+      - Fit ridge regression on the window (or use fixed betas if too short)
+      - Predict variance for "current step" and convert to annualized vol (float)
+    """
+
+    def __init__(self, params=None):
+        super().__init__(params)
+
+        self.returns_col = str(self.params.get("returns_col", "asset_returns"))
+
+        self.w_lookback = int(self.params.get("w_lookback", 5))
+        self.m_lookback = int(self.params.get("m_lookback", 22))
+
+        self.ridge_lambda = float(self.params.get("ridge_lambda", 1e-6))
+        self.min_obs = int(self.params.get("min_obs", 120))
+
+        # allow either ann_factor or vol_ann
+        self.ann = float(self.params.get("ann_factor", self.params.get("vol_ann", 252.0)))
+
+    # -------------------------
+    # internal helpers
+    # -------------------------
+    def _extract_returns(self, w) -> pd.Series:
+        """
+        Best-effort extraction of returns from w.
+        w might be:
+          - pd.DataFrame with a returns column
+          - pd.Series of returns
+          - np.ndarray of returns
+          - dict-like
+        """
+        if isinstance(w, pd.Series):
+            return w.astype(float)
+
+        if isinstance(w, pd.DataFrame):
+            if self.returns_col in w.columns:
+                return w[self.returns_col].astype(float)
+            # common fallbacks
+            for c in ["asset_returns", "returns_clean", "returns_raw", "returns", "ret"]:
+                if c in w.columns:
+                    return w[c].astype(float)
+            # last resort: if single column, use it
+            if w.shape[1] == 1:
+                return w.iloc[:, 0].astype(float)
+            raise KeyError(f"HARRV: cannot find returns column in window df. cols={list(w.columns)}")
+
+        if isinstance(w, np.ndarray):
+            return pd.Series(w.astype(float))
+
+        # dict-like
+        if hasattr(w, "get"):
+            for c in [self.returns_col, "asset_returns", "returns_clean", "returns_raw", "returns", "ret"]:
+                v = w.get(c, None)
+                if v is not None:
+                    return pd.Series(np.asarray(v, dtype=float))
+
+        raise TypeError(f"HARRV: unsupported window type {type(w)}")
+
+    def _ridge_beta(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+        """Ridge regression with intercept (intercept not penalized)."""
+        X1 = np.column_stack([np.ones(len(X)), X])
+        p = X1.shape[1]
+        I = np.eye(p)
+        I[0, 0] = 0.0
+        A = X1.T @ X1 + self.ridge_lambda * I
+        b = X1.T @ y
+        return np.linalg.solve(A, b)
+
+    def _har_forecast_from_returns(self, r: pd.Series) -> float:
+        """
+        Given a returns window r (past returns only), fit HAR on r^2 inside window
+        and forecast next-step variance using last available features.
+        Returns annualized volatility (float).
+        """
+        r = r.astype(float).replace([np.inf, -np.inf], np.nan).dropna()
+        if len(r) < max(self.m_lookback + 2, 10):
+            return float("nan")
+
+        rv = r.pow(2)
+
+        # Build features aligned within window:
+        # Use info up to time i-1 to predict rv at time i
+        rv_d = rv
+        rv_w = rv.rolling(self.w_lookback).mean()
+        rv_m = rv.rolling(self.m_lookback).mean()
+
+        X = pd.concat([rv_d.rename("rv_d"), rv_w.rename("rv_w"), rv_m.rename("rv_m")], axis=1).shift(1)
+        y = rv.rename("y")
+        m = pd.concat([X, y], axis=1).dropna()
+
+        if len(m) < self.min_obs:
+            # not enough to fit regression robustly; fallback to realized vol proxy
+            var_hat = float(rv.tail(self.m_lookback).mean())
+            var_hat = max(var_hat, 1e-18)
+            return float(np.sqrt(var_hat) * np.sqrt(self.ann))
+
+        Xn = m[["rv_d", "rv_w", "rv_m"]].to_numpy()
+        yn = m["y"].to_numpy()
+
+        beta = self._ridge_beta(Xn, yn)
+
+        # Forecast using the last row's shifted features (which are based on the most recent past)
+        x_last = m[["rv_d", "rv_w", "rv_m"]].iloc[-1].to_numpy()
+        x1 = np.r_[1.0, x_last]
+        var_hat = float(x1 @ beta)
+        if not np.isfinite(var_hat):
+            return float("nan")
+        var_hat = max(var_hat, 1e-18)
+
+        return float(np.sqrt(var_hat) * np.sqrt(self.ann))
+
+    # -------------------------
+    # public API: engine calls this
+    # -------------------------
+    def estimate(self, t, w, *args, **kwargs):
+        """
+        Primary entry for your engine: estimate(t, w) -> float annualized vol.
+
+        t is unused (timestamp), w is the rolling window.
+        """
+        # allow vol_ann override if engine passes numeric args
+        if len(args) >= 1 and isinstance(args[0], (int, float, np.integer, np.floating)) and np.isfinite(args[0]):
+            self.ann = float(args[0])
+        if "vol_ann" in kwargs and isinstance(kwargs["vol_ann"], (int, float)) and np.isfinite(kwargs["vol_ann"]):
+            self.ann = float(kwargs["vol_ann"])
+
+        r = self._extract_returns(w)
+        return self._har_forecast_from_returns(r)
+
+    # Optional: if some other code calls estimate(df) expecting a Series
+    def estimate_series(self, df: pd.DataFrame) -> pd.Series:
+        r = self._extract_returns(df)
+        out = pd.Series(index=df.index, dtype=float)
+        # expanding / rolling series version if you ever need it
+        for i in range(len(r)):
+            out.iloc[i] = self._har_forecast_from_returns(r.iloc[: i + 1])
+        return out
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\lasso_vol.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import Lasso
+from src.estimators.buy_and_hold import Estimator
+
+
+class LassoVolatility(Estimator):
+    """
+    Estimates volatility using an Autoregressive Lasso Regression (AR-Lasso).
+    Uses lagged daily variances as features to predict current daily variance,
+    applying L1 regularization for feature selection.
+    """
+
+    def __init__(self, params=None):
+        super().__init__(params)
+
+        # Lasso params
+        self.alpha = float(self.params.get("alpha", 0.1))
+        self.lags = int(self.params.get("lags", 22))
+        self.fit_intercept = bool(self.params.get("fit_intercept", True))
+
+        # common
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+        self.min_obs = int(self.params.get("min_obs", 50))
+        self.fallback = str(self.params.get("fallback", "rv")).lower()
+
+        # state/cache
+        self._fitted = False
+        self._vol_series = None
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+        # -----------------------------
+        # Diagnostics (engine-friendly)
+        # -----------------------------
+        self.diag = {
+            "fallback_rv": 0,
+            "fallback_rv_ts": [],
+            "non_converge": 0,           # fit() threw OR produced unusable series
+            "non_converge_ts": [],
+            "warmup_insufficient": 0,    # not enough obs to fit
+            "warmup_insufficient_ts": [],
+        }
+
+        # internal flag set by fit()
+        self._last_fit_failed = False
+
+    @staticmethod
+    def _rv_fallback(r: pd.Series, vol_ann: int) -> float:
+        """Fallback to standard Realized Volatility."""
+        r = pd.Series(r).dropna().astype(float)
+        if len(r) < 2:
+            return np.nan
+        return float(r.std(ddof=1) * np.sqrt(vol_ann))
+
+    def fit(self, returns):
+        """Build features and target, then fit Lasso model."""
+        r = pd.Series(returns).dropna().astype(float)
+        end_ts = pd.Timestamp(r.index[-1]) if len(r) else pd.NaT
+        self._last_fit_failed = False
+
+        # warm-up: not enough data
+        if len(r) < max(self.min_obs, self.lags + 2):
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="lasso_vol")
+            self._fitted = True
+
+            self.diag["warmup_insufficient"] += 1
+            if pd.notna(end_ts):
+                self.diag["warmup_insufficient_ts"].append(end_ts)
+
+            return self
+
+        try:
+            # 1) target proxy variance
+            daily_variance = r ** 2
+
+            # 2) lag features
+            df = pd.DataFrame({"y": daily_variance})
+            for i in range(1, self.lags + 1):
+                df[f"lag_{i}"] = daily_variance.shift(i)
+
+            df_clean = df.dropna()
+            if len(df_clean) < 10:
+                raise ValueError("Not enough data to fit Lasso after dropping NaNs.")
+
+            X = df_clean.drop("y", axis=1)
+            y = df_clean["y"]
+
+            # 3) fit Lasso
+            model = Lasso(
+                alpha=self.alpha,
+                fit_intercept=self.fit_intercept,
+                positive=True,
+                max_iter=2000,
+            )
+            model.fit(X, y)
+
+            # 4) predict variance on the available rows
+            pred_var = model.predict(X)
+
+            # guard: strictly positive variance
+            pred_var = np.maximum(pred_var, 1e-8)
+
+            # 5) annualize vol
+            vol_ann_values = np.sqrt(pred_var) * np.sqrt(self.vol_ann)
+
+            # 6) align index, forward fill to original r.index
+            pred_series = pd.Series(vol_ann_values, index=df_clean.index)
+            self._vol_series = pred_series.reindex(r.index).ffill()
+
+            # sanity: last value must be finite positive
+            v_end = float(self._vol_series.iloc[-1]) if len(self._vol_series) else np.nan
+            if (not np.isfinite(v_end)) or (v_end <= 0):
+                self._last_fit_failed = True
+                self.diag["non_converge"] += 1
+                if pd.notna(end_ts):
+                    self.diag["non_converge_ts"].append(end_ts)
+
+            self._fitted = True
+            return self
+
+        except Exception:
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="lasso_vol")
+            self._fitted = True
+            self._last_fit_failed = True
+
+            self.diag["non_converge"] += 1
+            if pd.notna(end_ts):
+                self.diag["non_converge_ts"].append(end_ts)
+
+            return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        """Calculate single point estimate for a rolling window (uses cache)."""
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end_ts = pd.Timestamp(r.index[-1])
+        n = len(r)
+
+        if self._cache_end == end_ts and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        self.fit(r)
+
+        v = np.nan
+        if self._vol_series is not None and len(self._vol_series) > 0:
+            v = float(self._vol_series.iloc[-1])
+
+        # fallback
+        if (not np.isfinite(v)) or (v <= 0):
+            if self.fallback == "rv":
+                v2 = self._rv_fallback(r, self.vol_ann)
+
+                # count fallback usage (whether or not it succeeds)
+                self.diag["fallback_rv"] += 1
+                self.diag["fallback_rv_ts"].append(end_ts)
+
+                v = v2
+            else:
+                v = np.nan
+
+        self._cache_end = end_ts
+        self._cache_len = n
+        self._cache_vol = v
+        return float(v) if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns):
+        """Retrieve volatility estimate for a specific timestamp."""
+        r = pd.Series(returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        if len(r.index) > 0 and r.index[-1] == t:
+            return self.estimate_window(r)
+
+        if (not self._fitted) or (self._vol_series is None):
+            self.fit(r)
+
+        if self._vol_series is None or len(self._vol_series) == 0:
+            return np.nan
+
+        if t in self._vol_series.index:
+            v = float(self._vol_series.loc[t])
+            return v if np.isfinite(v) else np.nan
+
+        s = self._vol_series.sort_index()
+        v = s.asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\realized_vol.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+from src.estimators.buy_and_hold import Estimator
+
+
+class RealizedVol(Estimator):
+    def __init__(self, params=None):
+        super().__init__(params)
+        self.lookback = int(self.params.get("lookback", 20))
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+
+        self._rv_series = None
+        self._fitted = False
+
+        # optional rolling cache
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+    def fit(self, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        rolling_std = r.rolling(window=self.lookback, min_periods=1).std()
+        vol = rolling_std * np.sqrt(self.vol_ann)
+        self._rv_series = pd.Series(vol, index=r.index, name="rv_vol").ffill().bfill()
+        self._fitted = True
+        return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end = r.index[-1]
+        n = len(r)
+        if self._cache_end == end and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        if len(r) < self.lookback:
+            v = np.nan
+        else:
+            v = float(r.iloc[-self.lookback:].std(ddof=1) * np.sqrt(self.vol_ann))
+
+        self._cache_end = end
+        self._cache_len = n
+        self._cache_vol = v
+        return v if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns=None):
+        if returns is not None:
+            r = pd.Series(returns).dropna()
+            if len(r) and r.index[-1] == t:
+                return self.estimate_window(r)
+
+        if self._rv_series is None:
+            if returns is None:
+                raise ValueError("RealizedVol not fitted and no returns provided.")
+            self.fit(returns)
+
+        if t in self._rv_series.index:
+            return float(self._rv_series.loc[t])
+
+        v = self._rv_series.sort_index().asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\wavelet.py`
+**text** -
+
+```py
+import numpy as np
+import pandas as pd
+import pywt
+from src.estimators.buy_and_hold import Estimator
+
+
+class WaveletVolatility(Estimator):
+    """
+    Estimates volatility by denoising returns using DWT, then rolling std.
+    (with diagnostics)
+    """
+
+    def __init__(self, params=None):
+        super().__init__(params)
+
+       
+        self.wavelet = str(self.params.get("wavelet", "db4"))
+        self.level = int(self.params.get("level", 2))
+        self.threshold_mode = str(self.params.get("threshold_mode", "soft"))
+        self.vol_window = int(self.params.get("vol_window", 22))
+
+      
+        self.vol_ann = int(self.params.get("vol_ann", 252))
+        self.min_obs = int(self.params.get("min_obs", 30))
+        self.fallback = str(self.params.get("fallback", "rv")).lower()
+
+    
+        self._fitted = False
+        self._vol_series = None
+        self._cache_end = None
+        self._cache_len = None
+        self._cache_vol = None
+
+        # -----------------------------
+        # Diagnostics
+        # -----------------------------
+        self.diag = {
+            "fallback_rv": 0,
+            "fallback_rv_ts": [],
+            "non_converge": 0,          
+            "non_converge_ts": [],
+            "warmup_insufficient": 0,    
+            "warmup_insufficient_ts": [],
+        }
+
+        self._last_fit_failed = False
+
+    @staticmethod
+    def _rv_fallback(r: pd.Series, vol_ann: int) -> float:
+        r = pd.Series(r).dropna().astype(float)
+        if len(r) < 2:
+            return np.nan
+        return float(r.std(ddof=1) * np.sqrt(vol_ann))
+
+    def fit(self, returns):
+        """Perform Wavelet denoising and calculate rolling volatility."""
+        r = pd.Series(returns).dropna().astype(float)
+        end_ts = pd.Timestamp(r.index[-1]) if len(r) else pd.NaT
+        self._last_fit_failed = False
+
+   
+        if len(r) < max(self.min_obs, self.vol_window + 2):
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="wavelet_vol")
+            self._fitted = True
+
+            self.diag["warmup_insufficient"] += 1
+            if pd.notna(end_ts):
+                self.diag["warmup_insufficient_ts"].append(end_ts)
+
+            return self
+
+        try:
+         
+            max_level = pywt.dwt_max_level(len(r), pywt.Wavelet(self.wavelet).dec_len)
+            actual_level = min(self.level, max_level)
+
+            coeffs = pywt.wavedec(r.values, self.wavelet, level=actual_level)
+
+      
+            sigma = np.median(np.abs(coeffs[-1])) / 0.6745
+            uthresh = sigma * np.sqrt(2 * np.log(len(r)))
+
+     
+            coeffs_thresh = [coeffs[0]] + [
+                pywt.threshold(c, value=uthresh, mode=self.threshold_mode)
+                for c in coeffs[1:]
+            ]
+
+      
+            denoised_r_values = pywt.waverec(coeffs_thresh, self.wavelet)[: len(r)]
+            denoised_r = pd.Series(denoised_r_values, index=r.index)
+
+
+            vol_daily = denoised_r.rolling(window=self.vol_window).std(ddof=1)
+            vol_ann_series = vol_daily * np.sqrt(self.vol_ann)
+
+            self._vol_series = pd.Series(vol_ann_series, index=r.index, name="wavelet_vol")
+            self._fitted = True
+
+          
+            v_end = float(self._vol_series.iloc[-1]) if len(self._vol_series) else np.nan
+            if (not np.isfinite(v_end)) or (v_end <= 0):
+                self._last_fit_failed = True
+                self.diag["non_converge"] += 1
+                if pd.notna(end_ts):
+                    self.diag["non_converge_ts"].append(end_ts)
+
+            return self
+
+        except Exception:
+            self._vol_series = pd.Series(index=r.index, dtype=float, name="wavelet_vol")
+            self._fitted = True
+            self._last_fit_failed = True
+
+            self.diag["non_converge"] += 1
+            if pd.notna(end_ts):
+                self.diag["non_converge_ts"].append(end_ts)
+
+            return self
+
+    def estimate_window(self, window_returns: pd.Series) -> float:
+        r = pd.Series(window_returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        end_ts = pd.Timestamp(r.index[-1])
+        n = len(r)
+
+        if self._cache_end == end_ts and self._cache_len == n and self._cache_vol is not None:
+            return float(self._cache_vol)
+
+        self.fit(r)
+
+        v = np.nan
+        if self._vol_series is not None and len(self._vol_series) > 0:
+            v = float(self._vol_series.iloc[-1])
+
+        
+        if (not np.isfinite(v)) or (v <= 0):
+            if self.fallback == "rv":
+                v2 = self._rv_fallback(r, self.vol_ann)
+
+                self.diag["fallback_rv"] += 1
+                self.diag["fallback_rv_ts"].append(end_ts)
+
+                v = v2
+            else:
+                v = np.nan
+
+        self._cache_end = end_ts
+        self._cache_len = n
+        self._cache_vol = v
+        return float(v) if np.isfinite(v) else np.nan
+
+    def estimate(self, t, returns):
+        r = pd.Series(returns).dropna().astype(float)
+        if len(r) == 0:
+            return np.nan
+
+        if len(r.index) > 0 and r.index[-1] == t:
+            return self.estimate_window(r)
+
+        if (not self._fitted) or (self._vol_series is None):
+            self.fit(r)
+
+        if self._vol_series is None or len(self._vol_series) == 0:
+            return np.nan
+
+        if t in self._vol_series.index:
+            v = float(self._vol_series.loc[t])
+            return v if np.isfinite(v) else np.nan
+
+        s = self._vol_series.sort_index()
+        v = s.asof(t)
+        return float(v) if pd.notna(v) else np.nan
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\estimators\__init__.py`
+**text** -
+
+```py
+"""Estimators module."""
+
+from src.estimators.buy_and_hold import Estimator
+from src.estimators.realized_vol import RealizedVol
+from src.estimators.ewma import EWMA
+from src.estimators.ar1 import AR1
+from src.estimators.garch import GARCH
+from src.estimators.egarch import EGARCH
+from src.estimators.buy_and_hold import BuyAndHold
+from src.estimators.har_rv import HARRV
+from src.estimators.wavelet import WaveletVolatility
+from src.estimators.lasso_vol import LassoVolatility
+
+__all__ = ["Estimator", "RealizedVol", "EWMA", "AR1", "GARCH", "EGARCH", "BuyAndHold", "HARRV", "WaveletVolatility", "LassoVolatility"]
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\evaluation\precision_metrics.py`
+**text** -
+
+```py
+# src/evaluation/precision_metrics.py
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+
+def realized_vol_next_from_returns(
+    returns: pd.Series,
+    ann_factor: float = 252.0,
+    eps: float = 1e-12,
+) -> pd.Series:
+    """
+    Build a simple realized-vol proxy for t+1 using only r_{t+1}:
+
+        rv_next(t) = sqrt( ann_factor * r_{t+1}^2 )
+
+    This is a *proxy* (one-step-ahead, single-return), but it matches the
+    "forecast at t for t+1" alignment used in evaluate_vol_forecast.
+    """
+    r_next = pd.Series(returns).shift(-1).astype(float)
+    rv2_next = ann_factor * (r_next**2)
+    rv_next = np.sqrt(np.maximum(rv2_next, eps))
+    rv_next.name = "rv_next"
+    return rv_next
+
+
+def qlike_loss_var(
+    rv2: pd.Series,
+    sigma2_hat: pd.Series,
+    eps: float = 1e-12,
+) -> pd.Series:
+    """
+    QLIKE loss in variance space:
+
+        L = log(sigma^2_hat) + rv^2 / sigma^2_hat
+
+    Lower is better.
+    """
+    s2 = np.maximum(pd.Series(sigma2_hat).astype(float), eps)
+    rv2 = pd.Series(rv2).astype(float)
+    return np.log(s2) + rv2 / s2
+
+
+def oos_r2(
+    y_true: pd.Series,
+    y_pred: pd.Series,
+    y_base: pd.Series,
+    eps: float = 1e-12,
+) -> float:
+    """
+    Out-of-sample R^2 vs baseline:
+
+        R2 = 1 - SSE_model / SSE_base
+        SSE = sum((y - yhat)^2)
+
+    Can be negative (worse than baseline).
+    """
+    y_true = pd.Series(y_true).astype(float)
+    y_pred = pd.Series(y_pred).astype(float)
+    y_base = pd.Series(y_base).astype(float)
+
+    tmp = pd.concat(
+        [y_true.rename("y"), y_pred.rename("m"), y_base.rename("b")], axis=1
+    ).dropna()
+
+    if len(tmp) < 5:
+        return np.nan
+
+    sse_m = float(np.sum((tmp["y"] - tmp["m"]) ** 2))
+    sse_b = float(np.sum((tmp["y"] - tmp["b"]) ** 2))
+
+    if sse_b <= eps:
+        return np.nan
+
+    return 1.0 - sse_m / sse_b
+
+
+def mincer_zarnowitz(
+    y: pd.Series,
+    x: pd.Series,
+    eps: float = 1e-12,
+) -> dict:
+    """
+    Mincer–Zarnowitz regression in variance space:
+        y = alpha + beta * x + e
+
+    Returns:
+        alpha, beta, r2, n
+
+    Notes:
+      - This is OLS with intercept using closed-form formulas.
+      - Typically use y = RV^2 and x = sigma_hat^2.
+      - Ideally alpha ~ 0, beta ~ 1, r2 high.
+    """
+    y = pd.Series(y).astype(float)
+    x = pd.Series(x).astype(float)
+    tmp = pd.concat([y.rename("y"), x.rename("x")], axis=1).dropna()
+
+    n = int(len(tmp))
+    if n < 5:
+        return {"n": n, "alpha": np.nan, "beta": np.nan, "r2": np.nan}
+
+    yv = tmp["y"].to_numpy()
+    xv = tmp["x"].to_numpy()
+
+    x_mean = float(np.mean(xv))
+    y_mean = float(np.mean(yv))
+
+    x_dev = xv - x_mean
+    y_dev = yv - y_mean
+
+    sxx = float(np.sum(x_dev**2))
+    if sxx <= eps:
+        return {"n": n, "alpha": np.nan, "beta": np.nan, "r2": np.nan}
+
+    beta = float(np.sum(x_dev * y_dev) / sxx)
+    alpha = float(y_mean - beta * x_mean)
+
+    y_hat = alpha + beta * xv
+    sse = float(np.sum((yv - y_hat) ** 2))
+    sst = float(np.sum((yv - y_mean) ** 2))
+
+    r2 = np.nan if sst <= eps else float(1.0 - sse / sst)
+    return {"n": n, "alpha": alpha, "beta": beta, "r2": r2}
+
+
+def evaluate_vol_forecast(
+    returns: pd.Series,
+    vol_hat: pd.Series,
+    ann_factor: float = 252.0,
+    eps: float = 1e-12,
+) -> dict:
+    
+    r = pd.Series(returns).astype(float)
+    rv_next = realized_vol_next_from_returns(r, ann_factor=ann_factor, eps=eps)
+    rv2_next = (rv_next**2).rename("rv2_next")
+
+    sigma_hat = pd.Series(vol_hat).astype(float).rename("sigma_hat")
+
+    tmp = pd.concat([sigma_hat, rv_next, rv2_next], axis=1).dropna()
+    if len(tmp) < 5:
+        return {
+            "n": int(len(tmp)),
+            "mse_var": np.nan,
+            "mae_vol": np.nan,
+            "qlike": np.nan,
+            "corr": np.nan,
+            "corr_var": np.nan,
+            "mse_var_const": np.nan,
+            "rel_mse_var": np.nan,
+            "oos_r2_var_vs_const": np.nan,
+            "mz_alpha": np.nan,
+            "mz_beta": np.nan,
+            "mz_r2": np.nan,
+        }
+
+    sigma2 = np.maximum(tmp["sigma_hat"] ** 2, eps)
+
+    # --- primary errors in variance space ---
+    err_var = sigma2 - tmp["rv2_next"]
+    mse_var = float(np.mean(err_var**2))
+
+    # --- baseline: constant variance forecast (mean realized variance on the same sample) ---
+    rv2_mean = float(tmp["rv2_next"].mean())
+    sigma2_base = pd.Series(rv2_mean, index=tmp.index, name="sigma2_base")
+    err_var_base = sigma2_base - tmp["rv2_next"]
+    mse_var_const = float(np.mean(err_var_base**2))
+
+    oos_r2_var_vs_const = float(oos_r2(tmp["rv2_next"], sigma2, sigma2_base, eps=eps))
+    rel_mse_var = float(mse_var / mse_var_const) if mse_var_const > eps else np.nan
+
+    # --- other common metrics ---
+    mae_vol = float(np.mean(np.abs(tmp["sigma_hat"] - tmp["rv_next"])))
+    qlike = float(np.mean(qlike_loss_var(tmp["rv2_next"], sigma2, eps=eps)))
+    corr = float(tmp["sigma_hat"].corr(tmp["rv_next"]))
+    corr_var = float(pd.Series(sigma2, index=tmp.index).corr(tmp["rv2_next"]))
+
+    # --- Mincer–Zarnowitz regression in variance space ---
+    mz = mincer_zarnowitz(tmp["rv2_next"], pd.Series(sigma2, index=tmp.index), eps=eps)
+
+    return {
+        "n": int(len(tmp)),
+        "mse_var": mse_var,
+        "mae_vol": mae_vol,
+        "qlike": qlike,
+        "corr": corr,
+        "corr_var": corr_var,
+        "mse_var_const": mse_var_const,
+        "rel_mse_var": rel_mse_var,
+        "oos_r2_var_vs_const": oos_r2_var_vs_const,
+        "mz_alpha": float(mz["alpha"]) if pd.notna(mz["alpha"]) else np.nan,
+        "mz_beta": float(mz["beta"]) if pd.notna(mz["beta"]) else np.nan,
+        "mz_r2": float(mz["r2"]) if pd.notna(mz["r2"]) else np.nan,
+    }
+
+
+def evaluate_multiple_estimators(
+    returns: pd.Series,
+    vol_forecasts: dict[str, pd.Series],
+    ann_factor: float = 252.0,
+) -> pd.DataFrame:
+    """
+    vol_forecasts: {"EWMA": vol_series, "GARCH": vol_series, ...}
+    returns: raw returns series (daily log returns)
+
+    Returns a DataFrame table of metrics, sorted by QLIKE (lower is better).
+    """
+    rows = []
+    for name, vol_hat in vol_forecasts.items():
+        m = evaluate_vol_forecast(returns, vol_hat, ann_factor=ann_factor)
+        m["model"] = name
+        rows.append(m)
+
+    out = pd.DataFrame(rows).set_index("model")
+
+    cols = [
+        "n",
+        "qlike",
+        "mse_var",
+        "mae_vol",
+        "corr",
+        "corr_var",
+        "oos_r2_var_vs_const",
+        "rel_mse_var",
+        "mse_var_const",
+        "mz_alpha",
+        "mz_beta",
+        "mz_r2",
+    ]
+    cols = [c for c in cols if c in out.columns]
+    out = out[cols]
+
+    # sort by qlike (lower is better)
+    if "qlike" in out.columns:
+        out = out.sort_values("qlike", ascending=True)
+
+    return out
+
+
+def print_metrics_table(df: pd.DataFrame, title: str | None = None):
+    """
+    Pretty print to console without extra dependencies.
+    """
+    if title:
+        print(f"\n📌 {title}")
+
+    if df.empty:
+        print("(empty)")
+        return
+
+    df_fmt = df.copy()
+
+    # column-specific formatting
+    def _fmt(x, f):
+        return f.format(x) if pd.notna(x) else "nan"
+
+    if "n" in df_fmt.columns:
+        df_fmt["n"] = df_fmt["n"].map(lambda x: str(int(x)) if pd.notna(x) else "nan")
+
+    for c in df_fmt.columns:
+        if c != "n":
+            df_fmt[c] = df_fmt[c].map(lambda x: _fmt(x, "{:.4f}"))
+
+    print(df_fmt.to_string())
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\evaluation\utils.py`
+**text** -
+
+```py
+"""Evaluation utilities."""
+
+import numpy as np
+import pandas as pd
+
+
+def compute_metrics(result, cfg):
+    """Compute evaluation metrics for a backtest result."""
+    returns = result.returns
+    index_level = result.index_level
+    
+    valid = returns[returns != 0].dropna()
+    ann = cfg.vol_ann
+    sqrt_ann = np.sqrt(ann)
+    n_years = len(valid) / ann
+    
+    metrics = {}
+    
+    # Volatility
+    metrics["realized_vol"] = float(valid.std() * sqrt_ann)
+    metrics["vol_vs_target"] = abs(metrics["realized_vol"] - cfg.target_vol)
+    
+    # Returns
+    metrics["total_return"] = float(index_level.iloc[-1] / index_level.iloc[0] - 1)
+    if n_years > 0:
+        metrics["cagr"] = float((index_level.iloc[-1] / index_level.iloc[0]) ** (1/n_years) - 1)
+    
+    # Risk-adjusted
+    if valid.std() > 0:
+        metrics["sharpe"] = float(valid.mean() * ann / (valid.std() * sqrt_ann))
+    
+    # Drawdown
+    cummax = index_level.cummax()
+    dd = (index_level - cummax) / cummax
+    metrics["max_drawdown"] = float(-dd.min())
+    
+    # Ulcer Index
+    metrics["ulcer_index"] = float(np.sqrt(np.mean(np.square(dd))))
+    
+    # Turnover
+    metrics["turnover_mean"] = float(result.turnover.mean())
+    
+    return metrics
+
+
+def build_comparison_table(results):
+    """Build DataFrame comparing metrics across strategies."""
+    return pd.DataFrame({
+        name: r["metrics"] for name, r in results.items()
+    }).T
+
+
+def compute_rolling_volatility(returns, window=21, annualize=252):
+    """Compute rolling annualized volatility."""
+    return returns.rolling(window).std() * np.sqrt(annualize)
+
+
+def compute_drawdown(index_level):
+    """Compute drawdown series from index level."""
+    cummax = index_level.cummax()
+    return (index_level - cummax) / cummax
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\evaluation\__init__.py`
+**text** -
+
+```py
+"""Evaluation utilities."""
+
+from src.evaluation.utils import (
+    compute_metrics,
+    build_comparison_table,
+    compute_rolling_volatility,
+    compute_drawdown,
+)
+
+__all__ = [
+    "compute_metrics",
+    "build_comparison_table",
+    "compute_rolling_volatility",
+    "compute_drawdown",
+]
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\importers\strategy_data_builder.py`
+**text** -
+
+```py
+import os
+import numpy as np
+import pandas as pd
+from src.env import Env
+
+
+class DataBentoImporter:
+    def __init__(self):
+        self.api_key = os.getenv("DATABENTO_API_KEY")
+
+        
+        self.raw_data_path = Env.path("raw") / "prices.csv"
+
+       
+        self.mapping = {
+            "timestamp": ["date", "Date", "timestamp", "Time", "DateTime", "ts_event"],
+            "symbol": ["symbol", "ticker", "instrument_id", "code"],
+            "close": ["close", "Close", "C"],
+            "volume": ["volume", "Volume", "vol", "V"],
+            "ret": ["ret", "return", "returns", "Ret"],
+            "rv20": ["rv20", "RV20", "realized_vol_20d"],
+        }
+
+    def _smart_rename(self, df: pd.DataFrame) -> pd.DataFrame:
+        rename_dict = {}
+        for std_name, variants in self.mapping.items():
+            for v in variants:
+                if v in df.columns:
+                    rename_dict[v] = std_name
+                    break
+        return df.rename(columns=rename_dict)
+
+    def fetch_all_as_mirror(self) -> pd.DataFrame:
+        
+        if self.api_key:
+            print("Use API Key (fallback to local in this project)")
+            return self._fetch_from_api()
+        else:
+            print(f"No API Key, From Local: {self.raw_data_path}")
+            return self._fetch_from_local_csv()
+
+    def _fetch_from_local_csv(self) -> pd.DataFrame:
+        if not self.raw_data_path.exists():
+            raise FileNotFoundError(f"Fail: No Local File {self.raw_data_path}")
+
+        df = pd.read_csv(self.raw_data_path, header=0, low_memory=False)
+        df = self._smart_rename(df)
+
+        
+        if "timestamp" not in df.columns:
+            raise ValueError("Your CSV must have a date column (e.g., 'date'/'Date')")
+
+        df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+        df = df.dropna(subset=["timestamp"]).sort_values("timestamp").set_index("timestamp")
+
+        return df
+
+    def _fetch_from_api(self) -> pd.DataFrame:
+        try:
+            import src.data.importers.strategy_data_builder as db  # noqa: F401
+            print("API not used here; fallback to local")
+            return self._fetch_from_local_csv()
+        except ImportError:
+            print("No databento; fallback to local")
+            return self._fetch_from_local_csv()
+
+
+    def save_processed_parquet(
+        self,
+        out_name: str = "ES_Daily_Processed.parquet",
+        use_log_return: bool = True,
+        winsor_q: float = 0.01,
+    ) -> pd.DataFrame:
+        """
+        Output columns required by backtest engine:
+          - returns
+          - returns_clean
+          - is_roll_day
+        """
+        df = self.fetch_all_as_mirror()
+
+        
+        if "ret" in df.columns:
+            ret_simple = pd.to_numeric(df["ret"], errors="coerce")
+        elif "close" in df.columns:
+            close = pd.to_numeric(df["close"], errors="coerce")
+            ret_simple = close.pct_change()
+        else:
+            raise ValueError("Need 'ret' or 'close' in CSV")
+
+        
+        returns = np.log1p(ret_simple) if use_log_return else ret_simple
+
+        
+        q_low = returns.quantile(winsor_q)
+        q_high = returns.quantile(1 - winsor_q)
+        returns_clean = returns.clip(lower=q_low, upper=q_high)
+
+        out = pd.DataFrame(
+            {
+                "returns": returns,
+                "returns_clean": returns_clean,
+                "is_roll_day": False,
+            },
+            index=df.index,
+        ).dropna()
+
+        out_path = Env.path("processed") / out_name
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out.to_parquet(out_path)
+
+        print(f"Saved processed dataset: {out_path} | rows={len(out)}")
+        return out
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\processors\data_lab_1.py`
+**text** -
+
+```py
+
+
+class DataLab1:
+    def __init__(self, input_filename="prices.parquet"):
+        self.processed_path = str(Env.path("processed"))
+        self.raw_path = str(Env.path("prices", "databento"))
+        self.input_path = Env.path("prices", "databento") / input_filename
+
+        os.makedirs(self.processed_path, exist_ok=True)
+
+    def load_raw_data(self):
+        if not self.input_path.exists():
+            raise FileNotFoundError(f"Input file not found: {self.input_path}")
+        print(f"📂 Loading raw data: {self.input_path}...")
+        df = pd.read_parquet(self.input_path)
+        return df.sort_index()
+
+    def save_processed_data(self, df, filename):
+        path = os.path.join(self.processed_path, filename)
+        df.to_parquet(path)
+        print(f"💾 File saved to: {path}")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\processors\data_lab_2.py`
+**text** -
+
+```py
+import pandas as pd
+from src.data.processors.data_lab_1 import DataLab1
+
+
+class DataLab2(DataLab1):
+    def __init__(self):
+        super().__init__()
+
+    def run_comprehensive_cleaning(self):
+        print("=" * 50)
+        print("🚀 Data Lab 2: Starting Multi-Period Refinement Process...")
+
+        df = self.load_raw_data()
+        df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
+
+        initial_count = len(df)
+        df = df[~df.index.duplicated(keep='first')]
+        df = df[df['close'] > 0]
+        print(f"  - Static Cleaning Complete: Removed {initial_count - len(df)} invalid records")
+
+        if 'symbol' in df.columns:
+            es_min_df = df[df['symbol'].str.contains('ES', na=False)].copy()
+        else:
+            es_min_df = df.copy()
+
+        self.save_processed_data(es_min_df, "ES_minute_Raw.parquet")
+        print(f"  - Exported Minutely Data: ES_minute_Raw.parquet ({len(es_min_df)} rows)")
+
+        es_daily_df = es_min_df.resample('B').last().dropna(subset=['close'])
+
+        self.save_processed_data(es_daily_df, "ES_Daily_Raw.parquet")
+        print(f"  - Exported Daily Data: ES_Daily_Raw.parquet ({len(es_daily_df)} rows)")
+
+        return es_min_df, es_daily_df
+
+
+if __name__ == "__main__":
+    lab = DataLab2()
+    min_df, daily_df = lab.run_comprehensive_cleaning()
+
+    print("\n" + "=" * 50)
+    print("📊 Data Summary")
+    print("-" * 50)
+
+    for name, df in [("ES_minute_Raw", min_df), ("ES_Daily_Raw", daily_df)]:
+        print(f"File Name: {name}.parquet")
+        print(f"Rows: {len(df):,}")
+        print(f"Start Time: {df.index.min()}")
+        print(f"End Time: {df.index.max()}")
+        print(f"Columns: {list(df.columns)}")
+        print(f"Memory Usage: {df.memory_usage(deep=True).sum() / 1024 ** 2:.2f} MB")
+        print("-" * 50)
+
+
+        self.save_processed_data(df, "ES_minute_Raw.parquet")
+        es_daily_df = df.resample('B').last().dropna(subset=['close'])
+        self.save_processed_data(es_daily_df, "ES_Daily_Raw.parquet")
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\src\data\processors\data_lab_3.py`
+**text** -
+
+```py
+import os
+import numpy as np
+import pandas as pd
+from src.data.processors.data_lab_2 import DataLab2
+
+class DataLab3(DataLab2):
+    def __init__(self):
+        super().__init__()
+
+    def build_continuous_strategy_data(self):
+        print("=" * 50)
+        print("🚀 Data Lab 3: Starting Strategy-Level Data Processing...")
+
+        input_file = os.path.join(self.processed_path, "ES_Daily_Raw.parquet")
+        df = pd.read_parquet(input_file)
+        df.index = pd.to_datetime(df.index)
+        df = df.sort_index()
+
+        df['is_roll_day'] = False
+        df['price_diff'] = 0.0
+
+        if 'symbol' in df.columns:
+            roll_mask = df['symbol'] != df['symbol'].shift(-1)
+            df.loc[roll_mask, 'is_roll_day'] = True
+
+            df.loc[roll_mask, 'price_diff'] = df['close'].shift(-1) - df['close']
+            df['adjustment'] = df.loc[::-1, 'price_diff'].shift(1).fillna(0).cumsum()[::-1]
+            df['close_adj'] = df['close'] + df['adjustment']
+            print(f"  - Roll Processing Complete: Marked {df['is_roll_day'].sum()} cost deduction points.")
+        else:
+            df['close_adj'] = df['close']
+            print("  - [Warning] Symbol column not detected, skipping back-adjustment and cost marking.")
+
+        full_calendar = pd.date_range(start=df.index.min(), end=df.index.max(), freq='B')
+        df = df.reindex(full_calendar)
+
+        df['close'] = df['close'].ffill()
+        df['close_adj'] = df['close_adj'].ffill()
+        df['is_roll_day'] = df['is_roll_day'].fillna(False)
+        if 'symbol' in df.columns:
+            df['symbol'] = df['symbol'].ffill()
+
+        df['returns'] = np.log(df['close_adj'] / df['close_adj'].shift(1))
+
+        rolling_std = df['returns'].rolling(window=252, min_periods=20).std()
+        df['upper_bound'] = 5 * rolling_std
+        df['lower_bound'] = -5 * rolling_std
+
+        df['returns_clean'] = df['returns'].combine(df['upper_bound'], min)
+        df['returns_clean'] = df['returns_clean'].combine(df['lower_bound'], max)
+
+        df = df.drop(columns=['upper_bound', 'lower_bound', 'price_diff', 'adjustment'])
+        print(f"  - Dynamic Winsorization Complete: Protecting capital from extreme outliers.")
+
+        final_filename = "ES_Daily_Processed.parquet"
+        self.save_processed_data(df, final_filename)
+        print(f"  - Strategy Truth File Generated: {final_filename}")
+
+        return df
+
+if __name__ == "__main__":
+    lab = DataLab3()
+    final_df = lab.build_continuous_strategy_data()
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR1_Naive.yaml`
+**text** -
+
+```yaml
+name: ar1_vol_naive_scaling
+description: AR(1) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar1.AR1
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR1_Regime.yaml`
+**text** -
+
+```yaml
+name: ar1_vol_regime_scaling
+description: AR(1) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar1.AR1
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR1_Squared.yaml`
+**text** -
+
+```yaml
+name: ar1_vol_variance_scaling
+description: AR(1) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar1.AR1
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR2_naive.yaml`
+**text** -
+
+```yaml
+name: ar2_naive
+description: AR(2) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar2.AR2
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR2_Regime.yaml`
+**text** -
+
+```yaml
+name: ar2_regime
+description: AR(2) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar2.AR2
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\AR2_Squared.yaml`
+**text** -
+
+```yaml
+name: ar2_vol_variance_scaling
+description: AR(2) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar2.AR2
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\buy_and_hold.yaml`
+**text** -
+
+```yaml
+name: buy_and_hold
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.BuyAndHold
+  params:
+    target_vol: 0.10
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 1.0
+weight_max: 1.0
+cost_bps: 0.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\EWMA_Naive.yaml`
+**text** -
+
+```yaml
+name: ewma_vol_naive_scaling
+description: Exponentially weighted moving average volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ewma.EWMA
+  params:
+    halflife: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\EWMA_Regime.yaml`
+**text** -
+
+```yaml
+name: ewma_vol_regime_scaling
+description: Exponentially weighted moving average volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ewma.EWMA
+  params:
+    halflife: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\EWMA_Squared.yaml`
+**text** -
+
+```yaml
+name: ewma_vol_variance_scaling
+description: Exponentially weighted moving average volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ewma.EWMA
+  params:
+    halflife: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\garch_11_Naive.yaml`
+**text** -
+
+```yaml
+name: garch_11_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.GARCH
+  params:
+    p: 1
+    q: 1
+    vol_ann: 252
+    mean: Zero
+    dist: normal
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\garch_11_Regime.yaml`
+**text** -
+
+```yaml
+name: garch_11_regime_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.GARCH
+  params:
+    p: 1
+    q: 1
+    vol_ann: 252
+    mean: Zero
+    dist: normal
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\garch_11_Squared.yaml`
+**text** -
+
+```yaml
+name: garch_11_variance_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.GARCH
+  params:
+    p: 1
+    q: 1
+    vol_ann: 252
+    mean: Zero
+    dist: normal
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\GJR_garch_Naive.yaml`
+**text** -
+
+```yaml
+name: gjr_garch_vol
+description: >
+  GJR-GARCH(1,1,1) volatility targeting strategy.
+  GJR-GARCH extends standard GARCH with an asymmetric news-impact term (gamma),
+  allowing negative return shocks to increase conditional variance more than
+  positive shocks — the leverage effect documented in equity markets.
+
+  Variance equation:
+    sigma^2_t = omega + (alpha + gamma * I_{t-1}) * eps^2_{t-1} + beta * sigma^2_{t-1}
+    where I_{t-1} = 1 if eps_{t-1} < 0, else 0.
+
+  roll_window: 252 ensures the estimator receives a full year of observations,
+  which is required for numerically stable MLE of the five parameters
+  (omega, alpha, gamma, beta, plus distribution shape if non-normal).
+
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+estimator:
+  class: src.estimators.gjr_garch.GJRGARCH
+  params:
+    lookback: 252       # history window fed to MLE (matches roll_window below)
+    min_obs: 126        # half-year minimum — below this, EWMA fallback is used
+    vol_ann: 252
+    recal_freq: 63      # recalibrate every ~quarter (counter-based, not n%freq)
+    scale: 1000.0       # return scaling for MLE numerical stability
+    p: 1                # GARCH lag order (lagged conditional variances)
+    q: 1                # ARCH lag order  (lagged squared residuals)
+    o: 1                # GJR asymmetry order (leverage indicator terms)
+    dist: normal        # innovation distribution: normal | t | skewt
+    maxiter: 500
+    ewma_hl: 21         # EWMA half-life used during warm-up fallback period
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252        # KEY: tells engine to pass 252 rows to estimate_window
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\GJR_garch_Regime.yaml`
+**text** -
+
+```yaml
+name: gjr_garch_regime
+description: >
+  GJR-GARCH(1,1,1) volatility targeting strategy.
+  GJR-GARCH extends standard GARCH with an asymmetric news-impact term (gamma),
+  allowing negative return shocks to increase conditional variance more than
+  positive shocks — the leverage effect documented in equity markets.
+
+  Variance equation:
+    sigma^2_t = omega + (alpha + gamma * I_{t-1}) * eps^2_{t-1} + beta * sigma^2_{t-1}
+    where I_{t-1} = 1 if eps_{t-1} < 0, else 0.
+
+  roll_window: 252 ensures the estimator receives a full year of observations,
+  which is required for numerically stable MLE of the five parameters
+  (omega, alpha, gamma, beta, plus distribution shape if non-normal).
+
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+estimator:
+  class: src.estimators.gjr_garch.GJRGARCH
+  params:
+    lookback: 252       # history window fed to MLE (matches roll_window below)
+    min_obs: 126        # half-year minimum — below this, EWMA fallback is used
+    vol_ann: 252
+    recal_freq: 63      # recalibrate every ~quarter (counter-based, not n%freq)
+    scale: 1000.0       # return scaling for MLE numerical stability
+    p: 1                # GARCH lag order (lagged conditional variances)
+    q: 1                # ARCH lag order  (lagged squared residuals)
+    o: 1                # GJR asymmetry order (leverage indicator terms)
+    dist: normal        # innovation distribution: normal | t | skewt
+    maxiter: 500
+    ewma_hl: 21         # EWMA half-life used during warm-up fallback period
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252        # KEY: tells engine to pass 252 rows to estimate_window
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\GJR_garch_Squared.yaml`
+**text** -
+
+```yaml
+name: gjr_garch_variance_scaling
+description: >
+  GJR-GARCH(1,1,1) volatility targeting strategy.
+  GJR-GARCH extends standard GARCH with an asymmetric news-impact term (gamma),
+  allowing negative return shocks to increase conditional variance more than
+  positive shocks — the leverage effect documented in equity markets.
+
+  Variance equation:
+    sigma^2_t = omega + (alpha + gamma * I_{t-1}) * eps^2_{t-1} + beta * sigma^2_{t-1}
+    where I_{t-1} = 1 if eps_{t-1} < 0, else 0.
+
+  roll_window: 252 ensures the estimator receives a full year of observations,
+  which is required for numerically stable MLE of the five parameters
+  (omega, alpha, gamma, beta, plus distribution shape if non-normal).
+
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+estimator:
+  class: src.estimators.gjr_garch.GJRGARCH
+  params:
+    lookback: 252       # history window fed to MLE (matches roll_window below)
+    min_obs: 126        # half-year minimum — below this, EWMA fallback is used
+    vol_ann: 252
+    recal_freq: 63      # recalibrate every ~quarter (counter-based, not n%freq)
+    scale: 1000.0       # return scaling for MLE numerical stability
+    p: 1                # GARCH lag order (lagged conditional variances)
+    q: 1                # ARCH lag order  (lagged squared residuals)
+    o: 1                # GJR asymmetry order (leverage indicator terms)
+    dist: normal        # innovation distribution: normal | t | skewt
+    maxiter: 500
+    ewma_hl: 21         # EWMA half-life used during warm-up fallback period
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252        # KEY: tells engine to pass 252 rows to estimate_window
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\har_rv_Naive.yaml`
+**text** -
+
+```yaml
+name: har_rv_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+roll_window: 100
+
+estimator:
+  class: src.estimators.HARRV
+  params:
+    returns_col: asset_returns
+    w_lookback: 5
+    m_lookback: 22
+    min_obs: 80
+    ridge_lambda: 1e-6
+    ann_factor: 252
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\har_rv_Regime.yaml`
+**text** -
+
+```yaml
+name: har_rv_regime_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+roll_window: 100
+
+estimator:
+  class: src.estimators.HARRV
+  params:
+    returns_col: asset_returns
+    w_lookback: 5
+    m_lookback: 22
+    ridge_lambda: 1e-6
+    min_obs: 80
+    ann_factor: 252
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\har_rv_Squared.yaml`
+**text** -
+
+```yaml
+name: har_rv_variance_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+roll_window: 100
+
+estimator:
+  class: src.estimators.HARRV
+  params:
+    returns_col: asset_returns
+    w_lookback: 5
+    m_lookback: 22
+    min_obs: 80
+    ridge_lambda: 1e-6
+    ann_factor: 252
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\lasso_vol_Naive.yaml`
+**text** -
+
+```yaml
+name: lasso_ar22_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.LassoVolatility
+  params:
+    alpha: 0.0001    # 正则化惩罚力度。太大会变成均值预测，太小会等同于普通线性回归
+    lags: 22         # 给模型提供过去 22 天的特征
+    vol_ann: 252
+    min_obs: 50
+    fallback: rv
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\lasso_vol_Regime.yaml`
+**text** -
+
+```yaml
+name: lasso_ar22_Regime_switching
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.LassoVolatility
+  params:
+    alpha: 0.0001    # 正则化惩罚力度。太大会变成均值预测，太小会等同于普通线性回归
+    lags: 22         # 给模型提供过去 22 天的特征
+    vol_ann: 252
+    min_obs: 50
+    fallback: rv
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\lasso_vol_Squared.yaml`
+**text** -
+
+```yaml
+name: lasso_ar22_VarianceScaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.LassoVolatility
+  params:
+    alpha: 0.0001    # 正则化惩罚力度。太大会变成均值预测，太小会等同于普通线性回归
+    lags: 22         # 给模型提供过去 22 天的特征
+    vol_ann: 252
+    min_obs: 50
+    fallback: rv
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\realized_vol_Naive.yaml`
+**text** -
+
+```yaml
+name: realized_vol_naive_scaling
+description: Simple 20-day realized volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.RealizedVol
+  params:
+    lookback: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+
+
+
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\realized_vol_Regime.yaml`
+**text** -
+
+```yaml
+name: realized_vol_regime_scaling
+description: Simple 20-day realized volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.RealizedVol
+  params:
+    lookback: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\realized_vol_Squared.yaml`
+**text** -
+
+```yaml
+name: realized_vol_variance_scaling
+description: Simple 20-day realized volatility strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.RealizedVol
+  params:
+    lookback: 20
+    vol_ann: 252
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\wavelet_Naive.yaml`
+**text** -
+
+```yaml
+name: wavelet_db4_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.WaveletVolatility
+  params:
+    wavelet: db4            # 小波基族，db4 常用于金融时间序列
+    level: 2                # 分解层数，日线通常 2-3 层即可
+    threshold_mode: soft    # 软阈值 (soft) 或硬阈值 (hard)，软阈值更平滑
+    vol_window: 22          # 降噪后计算波动率的滚动窗口 (通常为1个月的交易日)
+    vol_ann: 252            # 年化因子
+    min_obs: 30             # 最小观察天数，保证有足够数据做小波分解
+    fallback: rv            # 如果计算失败，回退到原始 Realized Volatility
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\wavelet_Regime.yaml`
+**text** -
+
+```yaml
+name: wavelet_db4_Regime_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.WaveletVolatility
+  params:
+    wavelet: db4            # 小波基族，db4 常用于金融时间序列
+    level: 2                # 分解层数，日线通常 2-3 层即可
+    threshold_mode: soft    # 软阈值 (soft) 或硬阈值 (hard)，软阈值更平滑
+    vol_window: 22          # 降噪后计算波动率的滚动窗口 (通常为1个月的交易日)
+    vol_ann: 252            # 年化因子
+    min_obs: 30             # 最小观察天数，保证有足够数据做小波分解
+    fallback: rv            # 如果计算失败，回退到原始 Realized Volatility
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+
+**File Name** - `C:\Users\Hp\OneDrive\Documents\GitHub\JPM week 6_1st_version\configs\strategies\wavelet_Squared.yaml`
+**text** -
+
+```yaml
+name: wavelet_db4_Variance_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+estimator:
+  class: src.estimators.WaveletVolatility
+  params:
+    wavelet: db4            # 小波基族，db4 常用于金融时间序列
+    level: 2                # 分解层数，日线通常 2-3 层即可
+    threshold_mode: soft    # 软阈值 (soft) 或硬阈值 (hard)，软阈值更平滑
+    vol_window: 22          # 降噪后计算波动率的滚动窗口 (通常为1个月的交易日)
+    vol_ann: 252            # 年化因子
+    min_obs: 30             # 最小观察天数，保证有足够数据做小波分解
+    fallback: rv            # 如果计算失败，回退到原始 Realized Volatility
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params:
+    sigma_bar_window: 252
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+```
+
+---
+

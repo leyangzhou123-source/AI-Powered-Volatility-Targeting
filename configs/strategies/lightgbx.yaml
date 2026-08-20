@@ -1,0 +1,95 @@
+name: lightgbx
+description: LightGBX-based volatility estimator strategy
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+target_vol: 0.1
+rebalance_freq: daily
+roll_window: 252
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+estimator:
+  class: src.estimators.lightgbx_vol.LightGBXVolatility
+  params:
+    lookback: 252
+    lags: 22
+    vol_ann: 252
+    min_obs: 120
+    n_estimators: 50
+    learning_rate: 0.05
+    max_depth: -1
+    num_leaves: 31
+    random_state: 42
+    n_jobs: 1
+    verbosity: -1
+    force_col_wise: true
+    refit_every: 21
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+router:
+  enabled: true
+  default_pair: lightgbx__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+    - name: lightgbx__naive_scaling
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.naive_scaling.NaiveScaling, params: {} }
+    - name: lightgbx__constant_weight
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.constant_weight.ConstantWeight, params: {} }
+    - name: lightgbx__variance_scaling
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.variance_scaling.VarianceScaling, params: {} }
+    - name: lightgbx__regime_switch
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.regime_controller.RegimeSwitchController, params: {} }
+    - name: lightgbx__vol_target_clip
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.vol_target_clip.VolTargetClip, params: {} }
+    - name: lightgbx__drawdown_brake
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.drawdown_brake.DrawdownBrake, params: {} }
+    - name: lightgbx__trend_filter
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.trend_filter.TrendFilter, params: {} }
+    - name: lightgbx__cvar_es_targeting
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.cvar_es_targeting.CVaRESTargeting, params: {} }
+    - name: lightgbx__hysteresis
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.hysteresis_controller.HysteresisController, params: {} }
+    - name: lightgbx__priority_stack
+      estimator:
+        class: src.estimators.lightgbx_vol.LightGBXVolatility
+        params: { lookback: 252, lags: 22, vol_ann: 252 }
+      controller: { class: src.controllers.priority_stack_controller.PriorityStackController, params: {} }

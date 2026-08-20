@@ -1,0 +1,125 @@
+name: realized_vol
+description: Simple 20-day realized volatility strategy
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+target_vol: 0.1
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: realized_vol__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: realized_vol__naive_scaling
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: realized_vol__constant_weight
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: realized_vol__variance_scaling
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: realized_vol__regime_switch
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: realized_vol__vol_target_clip
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: realized_vol__drawdown_brake
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: realized_vol__trend_filter
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: realized_vol__cvar_es_targeting
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: realized_vol__hysteresis
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: realized_vol__priority_stack
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: realized_vol__drawdown_modulated
+    estimator:
+      class: src.estimators.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_modulated.DrawdownModulatedController
+      params:
+        no_trade_band: 0.05
+        eps_vol: 1.0e-08
+        w_min: 0.0
+        w_max: 1.5
+        start_cut_dd: 0.05
+        max_dd: 0.20

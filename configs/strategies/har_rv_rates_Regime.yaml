@@ -1,0 +1,31 @@
+name: har_rv_rates_Regime_scaling
+description: >
+  HAR-RV extended with yield-curve slope features (t10y2y, t10y3m).
+  Model: Ridge regression in log-variance space.
+  Features: daily / weekly / monthly / quarterly RV components,
+  slope level (2-10yr, 3m-10yr), slope momentum (first diff), 
+  inversion dummy, and VIX as additional predictor.
+  Fully rolling-window compatible, closed-form solver (no convergence issues).
+
+roll_window: 252
+
+estimator:
+  class: src.estimators.har_rv_rates.HARRVRates
+  params:
+    w_lookback: 5         # weekly RV window
+    m_lookback: 22        # monthly RV window
+    q_lookback: 63        # quarterly RV window
+    ridge_lambda: 1.0e-4  # ridge regularisation (larger than bare HAR for stability)
+    min_obs: 80           # minimum clean rows before estimation
+    vol_ann: 252
+    log_space: false       # fit in log(RV) space
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: D
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

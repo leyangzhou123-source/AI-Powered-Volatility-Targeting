@@ -1,0 +1,34 @@
+name: egarch_naive
+description: >
+  EGARCH(1,1,1) with quarterly recalibration and leverage effect.
+  roll_window: 252 ensures the estimator receives a full year of data,
+  which EGARCH requires for numerically stable MLE parameter estimates.
+
+data:
+  symbol: ES_Daily_Processed
+  source: processed
+
+estimator:
+  class: src.estimators.egarch.EGARCH
+  params:
+    lookback: 252       
+    min_obs: 252        
+    vol_ann: 252
+    recal_freq: 90      
+    scale: 1000.0       
+    p: 1
+    q: 1
+    o: 1                
+    dist: normal
+    maxiter: 252
+
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+roll_window: 252

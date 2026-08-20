@@ -1,0 +1,104 @@
+name: regime_dependent_ensemble
+
+data:
+  path: data/processed/ES_Daily_Processed.parquet
+
+target_vol: 0.10
+rebalance_freq: daily
+roll_window: 252
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+estimator:
+  class: src.ensemble.regime_dependent_ensemble.RegimeDependentEnsemble
+  params:
+    name: regime_dependent_ensemble
+    estimators: [ewma, har_rv, garch_11, realized_vol]
+    min_obs: 120
+    returns_col: returns_clean
+    recognizer:
+      type: signal_rule
+      signals:
+        volatility_level:
+          enabled: true
+          lookback: 21
+          high_quantile: 0.7
+          low_quantile: 0.3
+        volatility_trend:
+          enabled: true
+          lookback: 5
+          threshold: 0.0
+        vix_level:
+          enabled: true
+          path: data/processed/VIX_Daily_Processed.parquet
+          high_quantile: 0.7
+          low_quantile: 0.3
+        iv_rv_spread:
+          enabled: true
+          rv_lookback: 21
+          threshold_quantile: 0.7
+        correlation_spike:
+          enabled: false
+        liquidity_stress:
+          enabled: false
+      rules:
+        - if: ["volatility_level=high", "vix_level=high"]
+          regime: stress
+        - if: ["volatility_level=low", "volatility_trend=falling"]
+          regime: calm
+        - if: ["volatility_trend=rising"]
+          regime: transition
+        - default: normal
+
+    regimes:
+      calm:
+        weights:
+          ewma: 0.45
+          har_rv: 0.35
+          garch_11: 0.10
+          realized_vol: 0.10
+      normal:
+        weights:
+          ewma: 0.30
+          har_rv: 0.30
+          garch_11: 0.20
+          realized_vol: 0.20
+      volatile:
+        weights:
+          ewma: 0.20
+          har_rv: 0.20
+          garch_11: 0.35
+          realized_vol: 0.25
+      stress:
+        weights:
+          ewma: 0.15
+          har_rv: 0.15
+          garch_11: 0.45
+          realized_vol: 0.25
+      transition:
+        weights:
+          ewma: 0.30
+          har_rv: 0.20
+          garch_11: 0.30
+          realized_vol: 0.20
+
+    estimator_params:
+      ewma:
+        halflife: 20
+        vol_ann: 252
+      har_rv:
+        returns_col: returns_clean
+        vol_ann: 252
+      garch_11:
+        p: 1
+        q: 1
+        vol_ann: 252
+      realized_vol:
+        lookback: 20
+        vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}

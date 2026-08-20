@@ -1,0 +1,45 @@
+name: xgb_vix_Regime_scaling
+description: >
+  XGBoost volatility estimator — Master Dataset edition.
+  Features: HAR (daily/weekly/monthly/quarterly RV), pre-computed RV20,
+  returns_clean-based variance proxies, jump indicator, VIX features
+  (level, momentum, VRP), yield-curve slope features (t10y2y, t10y3m),
+  slope momentum, slope acceleration, inversion dummies, and cross-term
+  interactions (VRP × inversion, slope × vol-of-vol).
+  Target: log-variance (reduces skewness, forces positivity on back-transform).
+  Training: time-decay sample weights (decay=0.999) prioritise recent obs.
+
+# A large roll_window converts the rolling backtest into an expanding-window
+# backtest, giving XGBoost access to the full history at each step.
+roll_window: 1000
+
+estimator:
+  class: src.estimators.xgb_vix.XGB_VIX
+  params:
+    w_lookback: 5
+    m_lookback: 22
+    min_obs: 120
+    vol_ann: 252
+    decay_factor: 0.999   # time-decay weight for recent observations
+
+    # Optuna-tuned XGBoost hyperparameters (log-variance target, purged CV)
+    n_estimators: 100
+    learning_rate: 0.010812716715384564
+    max_depth: 2
+    min_child_weight: 10
+    subsample: 0.5669290278568065
+    colsample_bytree: 0.8528047354557151
+    reg_alpha: 2.0167434495750266e-06
+    reg_lambda: 1.6240618485730088e-08
+    random_state: 42
+    refit_every: 21
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: D
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

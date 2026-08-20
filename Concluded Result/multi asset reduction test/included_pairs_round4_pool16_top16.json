@@ -1,0 +1,18 @@
+[
+  "expanding_covariance__equal_risk_contribution",
+  "expanding_covariance__diversified_risk_parity",
+  "shrunk_sample_covariance__regime_aware_risk_budget",
+  "downside_covariance__hysteresis_portfolio",
+  "pca_covariance__inverse_vol",
+  "diagonal_ewma_covariance__diversified_risk_parity",
+  "diagonal_ewma_covariance__equal_risk_contribution",
+  "diagonal_ewma_covariance__inverse_vol",
+  "dynamic_blend_covariance__inverse_vol",
+  "dynamic_blend_covariance__hysteresis_portfolio",
+  "ewma_covariance__inverse_vol",
+  "sample_covariance__regime_aware_risk_budget",
+  "regime_switching_covariance__drawdown_brake_portfolio",
+  "ledoit_wolf_covariance__equal_risk_contribution",
+  "rolling_corr_ewma_vol__momentum_tilt",
+  "regime_switching_covariance__equal_risk_contribution"
+]

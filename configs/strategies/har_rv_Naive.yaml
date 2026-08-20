@@ -1,0 +1,28 @@
+name: har_rv_naive_scaling
+
+data:
+  symbol: ES.v.0
+  source: local_csv
+
+roll_window: 100
+
+estimator:
+  class: src.estimators.HARRV
+  params:
+    returns_col: asset_returns
+    w_lookback: 5
+    m_lookback: 22
+    min_obs: 80
+    ridge_lambda: 1e-6
+    ann_factor: 252
+
+controller:
+  class: src.controllers.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252

@@ -1,0 +1,38 @@
+name: fixed_ensemble
+
+data:
+  path: data/processed/ES_Daily_Processed.parquet
+
+target_vol: 0.10
+rebalance_freq: daily
+roll_window: 252
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+
+estimator:
+  class: src.ensemble.fixed_ensemble.FixedEnsemble
+  params:
+    name: fixed_ensemble
+    estimators: [ewma, har_rv, garch_11, realized_vol]
+    min_obs: 60
+    returns_col: returns_clean
+    estimator_params:
+      ewma:
+        halflife: 20
+        vol_ann: 252
+      har_rv:
+        returns_col: returns_clean
+        vol_ann: 252
+      garch_11:
+        p: 1
+        q: 1
+        vol_ann: 252
+      realized_vol:
+        lookback: 20
+        vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}

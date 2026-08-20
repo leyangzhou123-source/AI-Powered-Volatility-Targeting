@@ -1,0 +1,61 @@
+name: rs_har_rates
+description: >
+  Regime-Switching HAR-RV (RSHARRates) volatility estimator.
+
+  Architecture:
+    (1) 3-state GaussianHMM on log(RV5) — identical configuration to
+        regime_gjr_garch.yaml for structural consistency.
+    (2) Same realized-regime override rule as RegimeGJRGARCH.
+    (3) Three independent HAR-RV Ridge regression models, one per regime k:
+
+           RV_{t+1} = β₀ₖ + β_{d,k}·RV_d + β_{w,k}·RV_w + β_{m,k}·RV_m
+
+        Calibration is performed ONLY on observations classified as regime k
+        within the rolling window.  Coefficients are updated every recal_freq
+        steps for the active regime.
+    (4) HAR inputs (RV_d, RV_w, RV_m) are re-derived fresh from the current
+        rolling window each step — no risk of stale input contamination.
+        The meaningful per-regime 'state' is the coefficient vector β.
+
+  Notes:
+    - Shares the same regime-detection architecture as RegimeGJRGARCH so that
+      when both run on the same data they see structurally consistent regimes.
+    - roll_window: 252 gives enough regime-specific observations even for the
+      least-frequent regime (expected ~84 days / 3 = 28 per regime minimum).
+
+data:
+  path: data/processed/Master_Dataset.parquet
+
+roll_window: 252
+
+estimator:
+  class: src.estimators.regime_har.RSHARRates
+  params:
+    # HAR-RV feature windows
+    w_lookback: 5          # weekly RV component
+    m_lookback: 22         # monthly RV component
+    q_lookback: 63         # quarterly window (used for regime obs extraction)
+
+    # Ridge regression
+    ridge_lambda: 1.0e-4   # regularisation; increase if regimes are thin
+
+    # Window configuration
+    min_obs: 80
+    vol_ann: 252
+    lookback: 252
+    recal_freq: 21         # recalibrate each regime's HAR every ~month
+    hmm_recal_freq: 21
+
+    # Realized-regime override
+    override_window: 5
+    rv_low_q: 0.33
+    rv_high_q: 0.67
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

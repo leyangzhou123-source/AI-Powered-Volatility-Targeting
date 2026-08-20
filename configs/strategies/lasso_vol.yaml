@@ -1,0 +1,138 @@
+name: lasso_vol
+data:
+  symbol: ES.v.0
+  source: local_csv
+target_vol: 0.1
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: lasso_vol__naive_scaling
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: lasso_vol__naive_scaling
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: lasso_vol__constant_weight
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: lasso_vol__variance_scaling
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: lasso_vol__regime_switch
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: lasso_vol__vol_target_clip
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: lasso_vol__drawdown_brake
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: lasso_vol__trend_filter
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: lasso_vol__cvar_es_targeting
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: lasso_vol__hysteresis
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: lasso_vol__priority_stack
+    estimator:
+      class: src.estimators.LassoVolatility
+      params:
+        alpha: 0.0001
+        lags: 22
+        vol_ann: 252
+        min_obs: 50
+        fallback: rv
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

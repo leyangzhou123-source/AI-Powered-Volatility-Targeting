@@ -1,0 +1,2 @@
+rows,start,end,ann_return,ann_vol,max_dd,cvar95,total_return,switches,pairs_used,turnover,sensitivity_enabled_any,selection_errors,switch_review_errors,sharpe,sortino
+502,2024-02-09,2026-02-10,0.08891533783665584,0.08728712685804864,-0.08612446523019113,-0.013638830724073523,0.18493526854497344,14,11,0.03210193395413517,False,8,2,1.0186535063899524,1.2634289288799703

@@ -1,0 +1,36 @@
+name: rs_har_rates_Regime_scaling
+description: >
+  Regime-Switching HAR-RV (RS-HAR-Rates).
+  Fits two separate Ridge-HAR models inside each rolling window:
+    (1) Calm regime — VIX below its 63-day rolling median
+    (2) Stressed regime — VIX above its 63-day rolling median
+  Uses rate slope features (t10y2y, t10y3m) and VIX for both regime
+  detection and vol forecasting. Regime is determined at prediction time
+  using the current VIX level. Hard-switches between the two models.
+  Closed-form Ridge solver — no iterative convergence required.
+
+roll_window: 252
+
+estimator:
+  class: src.estimators.regime_har.RSHARRates
+  params:
+    w_lookback: 5          # weekly RV window
+    m_lookback: 22         # monthly RV window
+    q_lookback: 63         # quarterly RV window
+    ridge_lambda: 1.0e-4   # ridge penalty (shared across both regime models)
+    regime_lookback: 63    # rolling window for VIX median regime threshold
+    min_obs_regime: 40     # minimum rows in a single regime to fit its model
+    min_obs: 80            # minimum total rows before any estimation
+    vol_ann: 252
+    log_space: false        # fit in log(RV) space
+    blend_weight: true    # false = hard regime switch; true = soft VIX-percentile blend
+
+controller:
+  class: src.controllers.regime_controller.RegimeSwitchController
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: D
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0

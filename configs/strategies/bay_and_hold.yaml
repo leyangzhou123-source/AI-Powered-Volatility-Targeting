@@ -1,0 +1,23 @@
+name: buy_and_hold_naive_scaling
+description: Buy and hold strategy implemented via constant volatility estimate (weight always 1)
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.buy_and_hold.BuyAndHold
+  params:
+    target_vol: 0.10   # must match engine target_vol
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252

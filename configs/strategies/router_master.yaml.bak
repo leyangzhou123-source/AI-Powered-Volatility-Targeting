@@ -1,0 +1,812 @@
+name: router_master
+description: 'Master router: auto-select estimator + controller from full candidate
+  set'
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+target_vol: 0.1
+rebalance_freq: daily
+roll_window: 252
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+router:
+  enabled: true
+  default_pair: ewma__naive
+  params:
+    sticky_period: 5
+    min_performance_obs: 20
+    use_perf_weight: true
+  pairs:
+  - name: ewma__naive
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: ewma__constant
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: ewma__variance
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: ewma__regime
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: ewma__vol_clip
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: ewma__drawdown
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: ewma__trend
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: ewma__cvar_es
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: ewma__hysteresis
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: ewma__priority
+    estimator:
+      class: src.estimators.ewma.EWMA
+      params:
+        halflife: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: realized_vol__naive
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: realized_vol__constant
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: realized_vol__variance
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: realized_vol__regime
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: realized_vol__vol_clip
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: realized_vol__drawdown
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: realized_vol__trend
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: realized_vol__cvar_es
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: realized_vol__hysteresis
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: realized_vol__priority
+    estimator:
+      class: src.estimators.realized_vol.RealizedVol
+      params:
+        lookback: 20
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: ar1__naive
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: ar1__constant
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: ar1__variance
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: ar1__regime
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: ar1__vol_clip
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: ar1__drawdown
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: ar1__trend
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: ar1__cvar_es
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: ar1__hysteresis
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: ar1__priority
+    estimator:
+      class: src.estimators.ar1.AR1
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: ar2__naive
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: ar2__constant
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: ar2__variance
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: ar2__regime
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: ar2__vol_clip
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: ar2__drawdown
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: ar2__trend
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: ar2__cvar_es
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: ar2__hysteresis
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: ar2__priority
+    estimator:
+      class: src.estimators.ar2.AR2
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: garch_11__naive
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: garch_11__constant
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: garch_11__variance
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: garch_11__regime
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: garch_11__vol_clip
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: garch_11__drawdown
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: garch_11__trend
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: garch_11__cvar_es
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: garch_11__hysteresis
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: garch_11__priority
+    estimator:
+      class: src.estimators.garch.GARCH
+      params:
+        p: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: gjr_garch__naive
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: gjr_garch__constant
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: gjr_garch__variance
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: gjr_garch__regime
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: gjr_garch__vol_clip
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: gjr_garch__drawdown
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: gjr_garch__trend
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: gjr_garch__cvar_es
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: gjr_garch__hysteresis
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: gjr_garch__priority
+    estimator:
+      class: src.estimators.gjr_garch.GJRGARCH
+      params:
+        p: 1
+        o: 1
+        q: 1
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: har_rv__naive
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: har_rv__constant
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: har_rv__variance
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: har_rv__regime
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: har_rv__vol_clip
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: har_rv__drawdown
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: har_rv__trend
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: har_rv__cvar_es
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: har_rv__hysteresis
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: har_rv__priority
+    estimator:
+      class: src.estimators.har_rv.HARRV
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: lasso_vol__naive
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: lasso_vol__constant
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: lasso_vol__variance
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: lasso_vol__regime
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: lasso_vol__vol_clip
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: lasso_vol__drawdown
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: lasso_vol__trend
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: lasso_vol__cvar_es
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: lasso_vol__hysteresis
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: lasso_vol__priority
+    estimator:
+      class: src.estimators.lasso_vol.LassoVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}
+  - name: wavelet__naive
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.naive_scaling.NaiveScaling
+      params: {}
+  - name: wavelet__constant
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.constant_weight.ConstantWeight
+      params: {}
+  - name: wavelet__variance
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.variance_scaling.VarianceScaling
+      params: {}
+  - name: wavelet__regime
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.regime_controller.RegimeSwitchController
+      params: {}
+  - name: wavelet__vol_clip
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.vol_target_clip.VolTargetClip
+      params: {}
+  - name: wavelet__drawdown
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.drawdown_brake.DrawdownBrake
+      params: {}
+  - name: wavelet__trend
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.trend_filter.TrendFilter
+      params: {}
+  - name: wavelet__cvar_es
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.cvar_es_targeting.CVaRESTargeting
+      params: {}
+  - name: wavelet__hysteresis
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.hysteresis_controller.HysteresisController
+      params: {}
+  - name: wavelet__priority
+    estimator:
+      class: src.estimators.wavelet.WaveletVolatility
+      params:
+        vol_ann: 252
+    controller:
+      class: src.controllers.priority_stack_controller.PriorityStackController
+      params: {}

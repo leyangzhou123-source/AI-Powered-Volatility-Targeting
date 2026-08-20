@@ -1,0 +1,24 @@
+name: ar1_vol_naive_scaling
+description: AR(1) model on squared returns for vol targeting
+
+data:
+  symbol: SPY
+  source: databento
+  price_col: close
+
+estimator:
+  class: src.estimators.ar1.AR1
+  params:
+    vol_ann: 252
+
+controller:
+  class: src.controllers.naive_scaling.NaiveScaling
+  params: {}
+
+target_vol: 0.10
+rebalance_freq: daily
+weight_min: 0.0
+weight_max: 1.5
+cost_bps: 5.0
+vol_ann: 252
+

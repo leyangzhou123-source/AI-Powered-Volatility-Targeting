@@ -1,0 +1,4 @@
+pair,days_selected
+xgb_vix__trend_filter,476
+xgb_vix__drawdown_brake,430
+xgb_vix__priority_stack_controller,30

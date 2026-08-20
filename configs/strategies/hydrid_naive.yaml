@@ -1,0 +1,36 @@
+# configs/strategies/hybrid_ewma_regime.yaml
+
+name: hybrid_ewma_regime_strategy
+
+
+estimator:
+  class: src.estimators.hydrid.HybridEWMARegime
+  params:
+    fast_half_life: 10
+    slow_half_life: 63
+    ann_factor: 252
+    min_obs: 30
+    var_init_mode: window_var
+    eps: 1.0e-12
+
+controller:
+  class: src.controllers.variance_scaling.VarianceScaling
+  params: {}
+
+target_vol: 0.10
+cost_bps: 5.0
+weight_min: 0.0
+weight_max: 1.5
+initial_capital: 1000.0
+rebalance_freq: D
+roll_window: 252
+ann_factor: 252
+
+hybrid_signal:
+  z_window: 126
+  hmm_min_obs: 60
+  smooth_span: 5
+  eps: 1.0e-8
+  k: 1.0
+  z0: 1.5
+  gamma: 1.0
